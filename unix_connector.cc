@@ -10,10 +10,10 @@ using namespace std;
 void UnixConnector::reconnect() {
   if (connected) return;
   
-  L<<Logger::Info<<getConnectorName()<<" is (re)connecting to "<<opts["path"]<<endl;
+  L<<Logger::Info<<getConnectorName()<<" is (re)connecting to "<<options["path"]<<endl;
   // check if path exists
 ´ 
-  local::stream_protocol::endpoint ep(opts[path]);
+  local::stream_protocol::endpoint ep(options[path]);
   socket = new local::stream_protocol::socket(io_service);
   socket->reuse_address = true;
   socket->connect(ep);

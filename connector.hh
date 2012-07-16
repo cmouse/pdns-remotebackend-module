@@ -45,6 +45,7 @@ class UnixConnector : public Connector {
    virtual bool query(const std::string &request);
    virtual bool reply(std::string &result);
  private:
+   void reconnect();
    stream_protocol::socket *socket;
    bool connected;
 };
@@ -57,6 +58,8 @@ class TCPConnector : public Connector {
    virtual bool query(const std::string &request);
    virtual bool reply(std::string &result);
  private:
+   void reconnect();
+   bool connected;
    tcp::socket *socket;
 };
 
@@ -65,8 +68,10 @@ class UDPConnector : public Connector {
    virtual const std::string getConnectorName() { return "UDPConnector"; };
    virtual bool query(const std::string &request);
    virtual bool reply(std::string &result);
- private:
+ private:   
+   void reconnect();
    udp::socket *socket;
+   udp::resolver::iterator iterator;
    bool connected;
 };
 

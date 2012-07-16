@@ -1,30 +1,39 @@
 #include "socketbackend.hh"
+#include <boost/foreach.hpp>
 
 namespace Socketbackend {
 
-using namespace boost::asio::ip::udp;
+using boost::asio::ip::udp;
 using namespace std;
 
 void UDPConnector::reconnect() {
   if (connected) return;
-  
-  L<<Logger::Info<<getConnectorName()<<" is (re)connecting to "<<opts["host"]<<":"<<opts["port"]<<endl;
   // check if path exists
-´ 
-  udp::endpoint ep(opts[host], opts[port]);
-  socket = new udp::socket(io_service);
-  socket->reuse_address = true;
-  socket->connect(ep);
+ 
+  udp::resolver resolver(io_service);
+  udp::resolver::query query(options["host"], options["port"]);
+  iterator = resolver.resolve(query);
+  udp::resolver::iterator end;
+  boost::asio::socket_base::reuse_address so_reuse_addr(true);
   
-  connected = true; // shall be seen
+  socket = new udp::socket(io_service);
+  socket->set_option(so_reuse_addr);
+  
+  if (iterator != end) {
+    connected = true;
+  } else {
+    throw new AhuException("Cannot resolve any endpoint");
+    connected = false;
+  }
 }
 
 bool UDPConnector::query(const std::string &request)
 {
   reconnect();
+  if (!connected) return false;
   try {
-     socket->write_data(request);
-  } catch {
+     socket->send_to(boost::asio::buffer(request), *iterator);
+  } catch(exception) {
      connected = false;
      return false;
   }
@@ -33,9 +42,12 @@ bool UDPConnector::query(const std::string &request)
 
 bool UDPConnector::reply(std::string &result)
 {
+  char data[1500];
+  if (!connected) return false;
   try {
-    socket->read_some(result);
-  } catch {
+     socket->receive(boost::asio::buffer(data));
+     result = data;
+  } catch(exception) {
      connected = false;
      return false;
   }
@@ -43,3 +55,4 @@ bool UDPConnector::reply(std::string &result)
 };
 
 };
+

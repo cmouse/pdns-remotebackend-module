@@ -21,12 +21,14 @@ Connector * Connector::build(const std::string &connstr) {
       stringtok(parts, opts, ",");
 
       // the first token defines the actual backend to use
-      if (parts[0].compare("unix") == 0) {
-        conn = new UnixConnector();
-      } else if (parts[0].compare("tcp") == 0) {
+      if (parts[0].compare("tcp") == 0) {
         conn = new TCPConnector();
       } else if (parts[0].compare("udp") == 0) {
         conn = new UDPConnector();
+#ifdef BOOST_ASIO_HAS_LOCAL_SOCKETS
+      } else if (parts[0].compare("unix") == 0) {
+        conn = new UnixConnector();
+#endif
 /*      } else if (parts[0].compare("pipe") == 0) {
           conn = new PipeConnector();
         }*/
