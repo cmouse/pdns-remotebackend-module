@@ -1,5 +1,3 @@
-#ifdef BOOST_ASIO_HAS_LOCAL_SOCKETS
-
 #include "socketbackend.hh"
 
 namespace Socketbackend {
@@ -20,8 +18,6 @@ void TCPConnector::reconnect() {
   
   connected = true; // shall be seen
 }
-
-};
 
 bool TCPConnector::query(const std::string &request)
 {
@@ -44,6 +40,8 @@ bool TCPConnector::reply(std::string &result)
      return false;
   }
   return true;
+};
+
 };
 
 #endif

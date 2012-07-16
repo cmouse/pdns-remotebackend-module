@@ -1,5 +1,3 @@
-#ifdef BOOST_ASIO_HAS_LOCAL_SOCKETS
-
 #include "socketbackend.hh"
 
 namespace Socketbackend {
@@ -20,8 +18,6 @@ void UDPConnector::reconnect() {
   
   connected = true; // shall be seen
 }
-
-};
 
 bool UDPConnector::query(const std::string &request)
 {
@@ -46,4 +42,4 @@ bool UDPConnector::reply(std::string &result)
   return true;
 };
 
-#endif
+};

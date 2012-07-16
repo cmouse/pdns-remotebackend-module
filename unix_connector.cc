@@ -21,8 +21,6 @@ void UnixConnector::reconnect() {
   connected = true; // shall be seen
 }
 
-};
-
 bool UnixConnector::query(const std::string &request)
 {
   reconnect();
@@ -44,6 +42,8 @@ bool UnixConnector::reply(std::string &result)
      return false;
   }
   return true;
+};
+
 };
 
 #endif
