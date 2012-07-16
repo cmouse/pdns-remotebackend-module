@@ -7,7 +7,7 @@ AM_CPPFLAGS=@THREADFLAGS@ $(BOOST_CPPFLAGS)
 EXTRA_DIST=OBJECTFILES OBJECTLIBS
 lib_LTLIBRARIES = libsocketbackend.la
 
-libsocketbackend_la_SOURCES=connector.hh connector.cc socketbackend.cc socketbackend.hh json.c json.h ../pipebackend/coprocess.cc ../pipebackend/coprocess.hh unix_connector.cc tcp_connector.cc udp_connector.cc
+libsocketbackend_la_SOURCES=connector.hh connector.cc socketbackend.cc socketbackend.hh json.c json.h ../pipebackend/coprocess.cc ../pipebackend/coprocess.hh unix_connector.cc tcp_connector.cc 
 
 libsocketbackend_la_LDFLAGS=-module -avoid-version
-libsocketbackend_la_LIBS=-ljson -lboost_system
+libsocketbackend_la_LIBS=-lboost_system

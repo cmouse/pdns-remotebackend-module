@@ -12,7 +12,6 @@
 #include "pdns/dnspacket.hh"
 #include "pdns/logger.hh"
 #include "connector.hh"
-#include <boost/asio.hpp>
 #include "json.h"
 
 using namespace std;

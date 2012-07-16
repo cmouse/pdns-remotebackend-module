@@ -1,7 +1,10 @@
 #include "socketbackend.hh"
 #include <boost/foreach.hpp>
+#include "pdns/misc.hh"
 
 namespace Socketbackend {
+
+Connector::Connector() { do_reuse = false; timeout = 2; };
 
 Connector * Connector::build(const std::string &connstr) {
       Connector *conn;
@@ -21,14 +24,10 @@ Connector * Connector::build(const std::string &connstr) {
       stringtok(parts, opts, ",");
 
       // the first token defines the actual backend to use
-      if (parts[0].compare("tcp") == 0) {
+      if (type == "tcp") {
         conn = new TCPConnector();
-      } else if (parts[0].compare("udp") == 0) {
-        conn = new UDPConnector();
-#ifdef BOOST_ASIO_HAS_LOCAL_SOCKETS
-      } else if (parts[0].compare("unix") == 0) {
+      } else if (type == "unix") {
         conn = new UnixConnector();
-#endif
 /*      } else if (parts[0].compare("pipe") == 0) {
           conn = new PipeConnector();
         }*/
