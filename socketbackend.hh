@@ -10,6 +10,8 @@
 #include "pdns/dnsbackend.hh"
 #include "pdns/dns.hh"
 #include "pdns/logger.hh"
+#include "connector.hh"
+#include <boost/asio.hpp>
 
 class SocketBackend : public DNSBackend 
 {
@@ -26,5 +28,9 @@ class SocketBackend : public DNSBackend
   bool getBeforeAndAfterNamesAbsolute(uint32_t id, const std::string& qname, std::string& unhashed, std::string& before, std::string& after);
   bool getBeforeAndAfterNames(uint32_t id, const std::string& zonename, const std::string& qname, std::string& before, std::string& after);
   bool getDomainInfo(const string &domain, DomainInfo &di);
+
+  protected:
+    std::string connstr;
+    Socketbackend::Connector *connector; 
 };
 #endif
