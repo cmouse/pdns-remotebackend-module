@@ -50,14 +50,41 @@ Connector * Connector::build(const std::string &connstr) {
           if (key == "reuse" && val == "true") {
             conn->do_reuse = true;
           }
-          if (key == "http" && val == "true") {
-            conn->do_http = true;
-          }
           if (key == "timeout") {
             conn->timeout = lexical_cast<int>(val);
           }
       }
       return conn;
 };
+
+
+bool Connector::query(const std::string &request, std::string &result)
+{
+   if (query(request) == false) return false;
+   return reply(result);
+}
+
+bool Connector::query(const JsonNode *request, JsonNode **result) 
+{
+   if (query(request) == false) return false;
+   return reply(result);
+}
+
+bool Connector::query(const JsonNode *request) 
+{
+   bool result;
+   char *s_request = json_encode(request);
+   result = query(std::string(s_request));
+   delete s_request;
+   return result;
+}
+
+bool Connector::reply(JsonNode **result)
+{
+   std::string s_result;
+   if (reply(s_result) == false) return false;
+   *result = json_decode(s_result.c_str());
+   return true;
+}
 
 };

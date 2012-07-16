@@ -56,5 +56,6 @@ class SocketBackend : public DNSBackend
 
   protected:
     Socketbackend::Connector *connector; 
+    bool d_locked; // locked in lookup/get
 };
 #endif
