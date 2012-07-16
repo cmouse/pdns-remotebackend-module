@@ -1,0 +1,32 @@
+A SocketBackend for PowerDNS. Features UNIX Socket, TCP and UDP connectors. Uses JSON for discussions between the other end and itself.
+
+TBD: Query formats
+
+Configuration
+
+The only configuration option available will be
+
+socket-connection-string=connstr
+
+connstr := connector:options
+options := option,option,option
+option := key=value
+
+Common options
+
+timeout = seconds
+
+Connector 'unix'
+
+path = /path/to/socket
+
+Connector 'tcp'
+
+host = hostname or address
+port = port
+reuse = reuse same tcp connection
+
+Connector 'udp'
+
+host = hostname or address
+port = port
