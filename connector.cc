@@ -1,6 +1,7 @@
 #include "socketbackend.hh"
 #include <boost/foreach.hpp>
 #include "pdns/misc.hh"
+#include <cctype>
 
 namespace Socketbackend {
 
@@ -15,7 +16,7 @@ Connector * Connector::build(const std::string &connstr) {
       // connstr is of format "type:options"
       size_t pos;
       pos = connstr.find_first_of(":");
-      if (pos == string::npos)
+      if (pos == std::string::npos)
          throw new AhuException("Invalid connection string: malformed");
 
       type = connstr.substr(0, pos);
@@ -27,7 +28,7 @@ Connector * Connector::build(const std::string &connstr) {
       if (type == "tcp") {
         conn = new TCPConnector();
       } else if (type == "unix") {
-        conn = new Connector();
+        conn = new UnixConnector();
 /*      } else if (parts[0].compare("pipe") == 0) {
           conn = new PipeConnector();
         }*/
@@ -39,10 +40,10 @@ Connector * Connector::build(const std::string &connstr) {
       // find out some options and parse them while we're at it
       BOOST_FOREACH(std::string opt, parts) {
           std::string key,val;
-          if (opt.find_first_not_of(" ") == string::npos) continue;
+          if (opt.find_first_not_of(" ") == std::string::npos) continue;
 
           pos = opt.find_first_of("=");
-          if (pos == string::npos) {
+          if (pos == std::string::npos) {
              throw new AhuException("Invalid connection string: option format is key=value");
           }
           key = opt.substr(0,pos);
@@ -65,13 +66,13 @@ bool Connector::query(const std::string &request, std::string &result)
    return reply(result);
 }
 
-bool Connector::query(const JsonNode *request, JsonNode **result) 
+bool Connector::query(JsonNode *request, JsonNode **result) 
 {
    if (query(request) == false) return false;
    return reply(result);
 }
 
-bool Connector::query(const JsonNode *request) 
+bool Connector::query(JsonNode *request)
 {
    bool result;
    char *s_request = json_encode(request);
@@ -84,7 +85,11 @@ bool Connector::reply(JsonNode **result)
 {
    std::string s_result;
    if (reply(s_result) == false) return false;
+   cout << "Connector::reply has " << s_result << endl;
    *result = json_decode(s_result.c_str());
+   if (*result == NULL) { // deocde failed?
+     return false;
+   }
    return true;
 }
 
@@ -106,7 +111,6 @@ bool Connector::query(const std::string &request)
 bool Connector::reply(std::string &result)
 { 
   bool ok = false;
-  stringstream ss(stringstream::in);
   fd_set rs;
   struct timeval tv;
   time_t t;
@@ -120,19 +124,26 @@ bool Connector::reply(std::string &result)
   t = time(NULL);
 
   while(time(NULL) - t < timeout) {
+    FD_ZERO(&rs);
+    FD_SET(sock, &rs);
     tv.tv_sec = 0;
-    tv.tv_usec = 100;
+    tv.tv_usec = 1000;
     if (select(sock+1, &rs, NULL, NULL, &tv)>0) {
       if (FD_ISSET(sock, &rs)) {
         size_t rlen;
         rlen = read(sock, data, sizeof data);
+        data[rlen] = 0;
         if (rlen == 0) {
            // EOF
            connected = false;
            return false;
         }
-        ss << data;
-        if (::index(data, '\n') != NULL) { result = ss.str(); ok = true; break; }
+        if (::index(data, '\n') != NULL) { ok = true; };
+
+        // trim data
+        result += std::string(data);
+        cout << "Result is now "  << result << endl;
+        if (ok) { cout << "Breaking out" << endl; break; }
       }
     }
   }
@@ -141,8 +152,12 @@ bool Connector::reply(std::string &result)
     close(sock);
     connected = false;
   }
-
-  // must have been timed out...
+ 
+  if (ok)
+    cout << "returning good" << endl;
+  else
+    cout << "returning bad" << endl;
+  
   return ok;
 };
 

@@ -1,7 +1,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "json.h"
+#include "json.hpp"
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -18,15 +18,14 @@ namespace Socketbackend {
      virtual ~Connector() {};
      virtual const std::string getConnectorName() { return ""; };
      bool query(const std::string &request, std::string &result);
-     bool query(const JsonNode *jquery, JsonNode **result);
-     bool query(const JsonNode *jquery);
+     bool query(JsonNode *request, JsonNode **result);
+     bool query(JsonNode *request);
      bool reply(JsonNode **result);
      bool query(const std::string &request);
      bool reply(std::string &result);
      static Connector *build(const std::string &connstr);
 
    protected:
-     virtual void initialize() {};
      virtual void reconnect() {};
      std::string connstr;
      std::map<std::string, std::string> options;
@@ -43,7 +42,7 @@ namespace Socketbackend {
      ~UnixConnector() { if (connected) { close(sock); } }
      virtual const std::string getConnectorName() { return "UnixConnector"; };
    protected:
-     void reconnect();
+     virtual void reconnect();
   };
   
   class TCPConnector : public Connector {
@@ -52,7 +51,7 @@ namespace Socketbackend {
      ~TCPConnector() { if (connected) { close(sock); } }
      virtual const std::string getConnectorName() { return "TCPConnector"; };
    protected:
-     void reconnect();
+     virtual void reconnect();
   };
 
 };
