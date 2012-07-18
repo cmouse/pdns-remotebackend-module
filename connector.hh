@@ -9,6 +9,10 @@
 #include <sys/select.h>
 #include <cstring>
 #include <sstream>
+#include "pdns/namespaces.hh"
+#include "pdns/logger.hh"
+
+#define L theL()
 
 namespace Socketbackend {
 
