@@ -27,7 +27,7 @@ Connector * Connector::build(const std::string &connstr) {
       if (type == "tcp") {
         conn = new TCPConnector();
       } else if (type == "unix") {
-        conn = new UnixConnector();
+        conn = new Connector();
 /*      } else if (parts[0].compare("pipe") == 0) {
           conn = new PipeConnector();
         }*/
@@ -87,5 +87,64 @@ bool Connector::reply(JsonNode **result)
    *result = json_decode(s_result.c_str());
    return true;
 }
+
+bool Connector::query(const std::string &request)
+{
+  const char *str;
+  reconnect();
+  if (!connected) return false;
+  str = request.c_str();
+  // send data size first
+  if ((write(sock, str, strlen(str)) < 1) || (write(sock, "\n", 1) < 1)) {
+    close(sock);
+    connected = false;
+    return false;
+  }
+  return true;
+};
+
+bool Connector::reply(std::string &result)
+{ 
+  bool ok = false;
+  stringstream ss(stringstream::in);
+  fd_set rs;
+  struct timeval tv;
+  time_t t;
+  char data[1500];
+
+  if (!connected) return ok;
+
+  FD_ZERO(&rs);
+  FD_SET(sock, &rs);
+
+  t = time(NULL);
+
+  while(time(NULL) - t < timeout) {
+    tv.tv_sec = 0;
+    tv.tv_usec = 100;
+    if (select(sock+1, &rs, NULL, NULL, &tv)>0) {
+      if (FD_ISSET(sock, &rs)) {
+        size_t rlen;
+        rlen = read(sock, data, sizeof data);
+        if (rlen == 0) {
+           // EOF
+           connected = false;
+           return false;
+        }
+        ss << data;
+        if (::index(data, '\n') != NULL) { result = ss.str(); ok = true; break; }
+      }
+    }
+  }
+
+  if (!do_reuse || !ok) {
+    close(sock);
+    connected = false;
+  }
+
+  // must have been timed out...
+  return ok;
+};
+
 
 };
