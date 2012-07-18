@@ -17,7 +17,7 @@ Connector * Connector::build(const std::string &connstr) {
       size_t pos;
       pos = connstr.find_first_of(":");
       if (pos == std::string::npos)
-         throw new AhuException("Invalid connection string: malformed");
+         throw new SBException("Invalid connection string: malformed");
 
       type = connstr.substr(0, pos);
       opts = connstr.substr(pos+1);
@@ -33,7 +33,7 @@ Connector * Connector::build(const std::string &connstr) {
           conn = new PipeConnector();
         }*/
       } else {
-        throw new AhuException("Invalid connection string: unknown connector");
+        throw new SBException("Invalid connection string: unknown connector");
       }
       conn->connstr = connstr;
 
@@ -44,7 +44,7 @@ Connector * Connector::build(const std::string &connstr) {
 
           pos = opt.find_first_of("=");
           if (pos == std::string::npos) {
-             throw new AhuException("Invalid connection string: option format is key=value");
+             throw new SBException("Invalid connection string: option format is key=value");
           }
           key = opt.substr(0,pos);
           val = opt.substr(pos+1);
@@ -87,7 +87,7 @@ bool Connector::reply(JsonNode **result)
    if (reply(s_result) == false) return false;
    cout << "Connector::reply has " << s_result << endl;
    *result = json_decode(s_result.c_str());
-   if (*result == NULL) { // deocde failed?
+   if (*result == NULL) { // decode failed?
      return false;
    }
    return true;
@@ -99,7 +99,6 @@ bool Connector::query(const std::string &request)
   reconnect();
   if (!connected) return false;
   str = request.c_str();
-  // send data size first
   if ((write(sock, str, strlen(str)) < 1) || (write(sock, "\n", 1) < 1)) {
     close(sock);
     connected = false;
@@ -123,6 +122,9 @@ bool Connector::reply(std::string &result)
 
   t = time(NULL);
 
+  // make sure result is clean
+  result = "";
+
   while(time(NULL) - t < timeout) {
     FD_ZERO(&rs);
     FD_SET(sock, &rs);
@@ -140,12 +142,9 @@ bool Connector::reply(std::string &result)
         }
         if (::index(data, '\n') != NULL) { ok = true; };
 
-        // trim data
         result += std::string(data);
-        cout << "Result is now "  << result << endl;
-        if (ok) { cout << "Breaking out" << endl; break; }
       }
-    }
+    } else if (ok) break; // all data consumed. 
   }
 
   if (!do_reuse || !ok) {
@@ -153,11 +152,10 @@ bool Connector::reply(std::string &result)
     connected = false;
   }
  
-  if (ok)
-    cout << "returning good" << endl;
-  else
-    cout << "returning bad" << endl;
-  
+  // ensure we only process one line
+  int pos = result.find_first_of("\n");
+  result = result.substr(0,pos);
+
   return ok;
 };
 
