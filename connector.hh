@@ -2,6 +2,13 @@
 #include <vector>
 #include <map>
 #include "json.h"
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/select.h>
+#include <cstring>
+#include <sstream>
 
 namespace Socketbackend {
 
@@ -14,12 +21,13 @@ namespace Socketbackend {
      bool query(const JsonNode *jquery, JsonNode **result);
      bool query(const JsonNode *jquery);
      bool reply(JsonNode **result);
-     virtual bool query(const std::string &request) { return false; };
-     virtual bool reply(std::string &result) { return false; };
+     bool query(const std::string &request);
+     bool reply(std::string &result);
      static Connector *build(const std::string &connstr);
 
    protected:
-     void initialize() {};
+     virtual void initialize() {};
+     virtual void reconnect() {};
      std::string connstr;
      std::map<std::string, std::string> options;
   
@@ -34,9 +42,7 @@ namespace Socketbackend {
      UnixConnector() { connected = false; };
      ~UnixConnector() { if (connected) { close(sock); } }
      virtual const std::string getConnectorName() { return "UnixConnector"; };
-     virtual bool query(const std::string &request);
-     virtual bool reply(std::string &result);
-   private:
+   protected:
      void reconnect();
   };
   
@@ -45,9 +51,7 @@ namespace Socketbackend {
      TCPConnector() { connected = false; };
      ~TCPConnector() { if (connected) { close(sock); } }
      virtual const std::string getConnectorName() { return "TCPConnector"; };
-     virtual bool query(const std::string &request);
-     virtual bool reply(std::string &result);
-   private:
+   protected:
      void reconnect();
   };
 
