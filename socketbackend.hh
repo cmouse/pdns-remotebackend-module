@@ -19,12 +19,12 @@ using namespace std;
 class SocketBackend : public DNSBackend 
 {
   public:
-  SocketBackend(const string &suffix="")
+  SocketBackend(const std::string &suffix="")
   {
       this->connector = Socketbackend::Connector::build(getArg("connection-string"));
   }
 
-  void lookup(const QType &qtype, const string &qdomain, DNSPacket *pkt_p=0, int zoneId=-1)
+  void lookup(const QType &qtype, const std::string &qdomain, DNSPacket *pkt_p=0, int zoneId=-1)
   {
       struct JsonNode *query;
       query = json_mkobject();
@@ -43,16 +43,16 @@ class SocketBackend : public DNSBackend
   }
 
   bool get(DNSResourceRecord &rr) { return false; };
-  bool list(const string &target, int domain_id) { return false; };
+  bool list(const std::string &target, int domain_id) { return false; };
   ~SocketBackend() {};
-  bool getSOA(const string &name, SOAData &soadata, DNSPacket *p=0) { return false; };
-  bool getDomainMetadata(const string& name, const std::string& kind, std::vector<std::string>& meta) { return false; };
-  bool getDomainKeys(const string& name, unsigned int kind, std::vector<DNSBackend::KeyData>& keys) { return false; };
-  bool getTSIGKey(const string& name, string* algorithm, string* content) { return false; };
+  bool getSOA(const std::string &name, SOAData &soadata, DNSPacket *p=0) { return false; };
+  bool getDomainMetadata(const std::string& name, const std::string& kind, std::vector<std::string>& meta) { return false; };
+  bool getDomainKeys(const std::string& name, unsigned int kind, std::vector<DNSBackend::KeyData>& keys) { return false; };
+  bool getTSIGKey(const std::string& name, string* algorithm, string* content) { return false; };
   bool getBeforeAndAfterNamesAbsolute(uint32_t id, const std::string& qname, std::string& unhashed, std::string& before, std::string& after) { return false; };
   bool getBeforeAndAfterNames(uint32_t id, const std::string& zonename, const std::string& qname, std::string& before, std::string& after) { return false; };
 
-  bool getDomainInfo(const string &domain, DomainInfo &di) { return false; };
+  bool getDomainInfo(const std::string &domain, DomainInfo &di) { return false; };
 
   protected:
     Socketbackend::Connector *connector; 
