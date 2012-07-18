@@ -42,16 +42,17 @@ class SocketBackend : public DNSBackend
       json_delete(query);
   }
 
-  bool get(DNSResourceRecord &rr);
-  bool list(const string &target, int domain_id);  
-  ~SocketBackend(){};
-  bool getSOA(const string &name, SOAData &soadata, DNSPacket *p=0);
-  bool getDomainMetadata(const string& name, const std::string& kind, std::vector<std::string>& meta);
-  bool getDomainKeys(const string& name, unsigned int kind, std::vector<DNSBackend::KeyData>& keys);
-  bool getTSIGKey(const string& name, string* algorithm, string* content);
-  bool getBeforeAndAfterNamesAbsolute(uint32_t id, const std::string& qname, std::string& unhashed, std::string& before, std::string& after);
-  bool getBeforeAndAfterNames(uint32_t id, const std::string& zonename, const std::string& qname, std::string& before, std::string& after);
-  bool getDomainInfo(const string &domain, DomainInfo &di);
+  bool get(DNSResourceRecord &rr) { return false; };
+  bool list(const string &target, int domain_id) { return false; };
+  ~SocketBackend() {};
+  bool getSOA(const string &name, SOAData &soadata, DNSPacket *p=0) { return false; };
+  bool getDomainMetadata(const string& name, const std::string& kind, std::vector<std::string>& meta) { return false; };
+  bool getDomainKeys(const string& name, unsigned int kind, std::vector<DNSBackend::KeyData>& keys) { return false; };
+  bool getTSIGKey(const string& name, string* algorithm, string* content) { return false; };
+  bool getBeforeAndAfterNamesAbsolute(uint32_t id, const std::string& qname, std::string& unhashed, std::string& before, std::string& after) { return false; };
+  bool getBeforeAndAfterNames(uint32_t id, const std::string& zonename, const std::string& qname, std::string& before, std::string& after) { return false; };
+
+  bool getDomainInfo(const string &domain, DomainInfo &di) { return false; };
 
   protected:
     Socketbackend::Connector *connector; 
