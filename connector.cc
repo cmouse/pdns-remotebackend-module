@@ -56,6 +56,7 @@ Connector * Connector::build(const std::string &connstr) {
             conn->timeout = lexical_cast<int>(val);
           }
       }
+ 
       return conn;
 };
 
@@ -68,6 +69,7 @@ bool Connector::query(const std::string &request, std::string &result)
 
 bool Connector::query(JsonNode *request, JsonNode **result) 
 {
+   *result = NULL; // just to be sure..
    if (query(request) == false) return false;
    return reply(result);
 }
@@ -84,8 +86,8 @@ bool Connector::query(JsonNode *request)
 bool Connector::reply(JsonNode **result)
 {
    std::string s_result;
+   *result = NULL;
    if (reply(s_result) == false) return false;
-   cout << "Connector::reply has " << s_result << endl;
    *result = json_decode(s_result.c_str());
    if (*result == NULL) { // decode failed?
      return false;
@@ -100,6 +102,8 @@ bool Connector::query(const std::string &request)
   if (!connected) return false;
   str = request.c_str();
   if ((write(sock, str, strlen(str)) < 1) || (write(sock, "\n", 1) < 1)) {
+    // write failed?
+    L<<Logger::Error<<"write failed - closing socket"<<std::endl;
     close(sock);
     connected = false;
     return false;
@@ -113,7 +117,8 @@ bool Connector::reply(std::string &result)
   fd_set rs;
   struct timeval tv;
   time_t t;
-  char data[1500];
+  char data[1500]; 
+  size_t pos;
 
   if (!connected) return ok;
 
@@ -134,30 +139,52 @@ bool Connector::reply(std::string &result)
       if (FD_ISSET(sock, &rs)) {
         size_t rlen;
         rlen = read(sock, data, sizeof data);
-        data[rlen] = 0;
-        if (rlen == 0) {
-           // EOF
+
+        if (rlen < 1) {
+           L<<Logger::Error<<"read error - closing socket"<<std::endl;
+           close(sock);
            connected = false;
            return false;
         }
-        if (::index(data, '\n') != NULL) { ok = true; };
 
+        data[rlen] = 0;
         result += std::string(data);
+        while((pos = result.find_first_of("\n")) != std::string::npos) {
+          // handle the line. 
+          std::string tmp = result.substr(pos+1);
+          result = result.substr(0, pos);
+          DLOG(L<<Logger::Notice<<"result = "<<result<<std::endl);
+
+          if (result.substr(0, 6) == "{\"log\"") {
+             // parse as json
+             JsonNode *log;
+             log = json_decode(result.c_str());
+             if (log == NULL) {
+               L<<Logger::Error<<"Failed extracting LOG from stream"<<std::endl;
+             } else {
+               L<<Logger::Info<<json_first_child(log)->string_<<std::endl;
+             }
+             json_delete(log);
+             result = tmp;
+          } else {
+             // well, it could be our answer
+             ok = true;
+             break;
+          }
+        }
       }
-    } else if (ok) break; // all data consumed. 
+    }
+    if (ok) break; // all data consumed. 
   }
 
   if (!do_reuse || !ok) {
+    if (!ok) L<<Logger::Error<<"timeout - closing socket"<<std::endl;
     close(sock);
     connected = false;
   }
- 
-  // ensure we only process one line
-  int pos = result.find_first_of("\n");
-  result = result.substr(0,pos);
 
   return ok;
-};
+}
 
 
 };

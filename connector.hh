@@ -43,7 +43,7 @@ namespace Socketbackend {
   class UnixConnector : public Connector {
    public:
      UnixConnector() { connected = false; };
-     ~UnixConnector() { if (connected) { close(sock); } }
+     ~UnixConnector();
      virtual const std::string getConnectorName() { return "UnixConnector"; };
    protected:
      virtual void reconnect();

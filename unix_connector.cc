@@ -6,6 +6,7 @@
 #include <linux/un.h>
 #include <cstdio>
 #include <iostream>
+#include <boost/shared_ptr.hpp>
 
 using namespace std;
 
@@ -18,8 +19,8 @@ void UnixConnector::reconnect() {
 
   if (connected) return;
 
-  close(sock);
-  sock = -1;
+  // enable do_reuse
+  do_reuse = true;
 
   L<<Logger::Info<<getConnectorName()<<" is (re)connecting to "<<options["path"]<<endl;
 
@@ -43,26 +44,6 @@ void UnixConnector::reconnect() {
   }
 
   connected = true;
- 
-  //make sure no data is left there...
-  while(1) {
-    fd_set rs;
-    struct timeval tv;
-    FD_ZERO(&rs);
-    FD_SET(sock, &rs);
-    tv.tv_sec = 0;
-    tv.tv_usec = 1000;
-    if (select(sock+1, &rs, NULL, NULL, &tv)>0) {
-       char data[1500];
-       if (FD_ISSET(sock,&rs)) {
-          if (read(sock, data, sizeof data) < 1) {
-             connected = false;
-             close(sock); 
-             break;
-          }
-       }
-    } else break;
-  }
-}
+} 
 
 };
