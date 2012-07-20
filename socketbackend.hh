@@ -41,14 +41,11 @@ class SocketBackend : public DNSBackend
   bool list(const std::string &target, int domain_id); 
 
   // unimplemented
-/*  virtual bool getSOA(const std::string &name, SOAData &soadata, DNSPacket *p=0) { return false; };
-  virtual bool getDomainMetadata(const std::string& name, const std::string& kind, std::vector<std::string>& meta) { return false; };
-  virtual bool getDomainKeys(const std::string& name, unsigned int kind, std::vector<DNSBackend::KeyData>& keys) { return false; };
-  virtual bool getTSIGKey(const std::string& name, std::string* algorithm, std::string* content) { return false; };
-  virtual bool getBeforeAndAfterNamesAbsolute(uint32_t id, const std::string& qname, std::string& unhashed, std::string& before, std::string& after) { return false; };
-  virtual bool getBeforeAndAfterNames(uint32_t id, const std::string& zonename, const std::string& qname, std::string& before, std::string& after) { return false; };
-
-  virtual bool getDomainInfo(const std::string &domain, DomainInfo &di) { return false; };*/
+  virtual bool getDomainMetadata(const std::string& name, const std::string& kind, std::vector<std::string>& meta);
+  virtual bool getDomainKeys(const std::string& name, unsigned int kind, std::vector<DNSBackend::KeyData>& keys);
+  virtual bool getTSIGKey(const std::string& name, std::string* algorithm, std::string* content);
+  virtual bool getBeforeAndAfterNamesAbsolute(uint32_t id, const std::string& qname, std::string& unhashed, std::string& before, std::string& after);
+  virtual bool getBeforeAndAfterNames(uint32_t id, const std::string& zonename, const std::string& qname, std::string& before, std::string& after);
 
   static DNSBackend *maker();
 
