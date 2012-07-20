@@ -1,4 +1,5 @@
 #include "socketbackend.hh"
+#include <boost/shared_ptr.hpp>
 
 static const char *kBackendId = "[SocketBackend]";
 
@@ -8,7 +9,6 @@ SocketBackend::SocketBackend(const std::string &suffix)
       this->connector = Socketbackend::Connector::build(getArg("connection-string"));
       this->d_dnssec = mustDo("dnssec");
       d_result = d_position = NULL;
-      L<<Logger::Info<<"Created SocketBackend"<<endl;
 }
 
 SocketBackend::~SocketBackend() {
@@ -20,7 +20,7 @@ void SocketBackend::lookup(const QType &qtype, const std::string &qdomain, DNSPa
 {
       struct JsonNode *query, *args;
 
-      L<<Logger::Info<<"Running lookup for "<<qdomain<<endl;
+      DLOG(L<<Logger::Info<<"Running lookup for "<<qdomain<<endl);
 
       if (d_result != NULL) {
           throw new AhuException("Lookup while get running");
@@ -154,7 +154,7 @@ bool SocketBackend::getBeforeAndAfterNamesAbsolute(uint32_t id, const std::strin
       }
       json_delete(query);
       if (result == NULL) return false;
-      position = json_find_member(d_result, "result");
+      position = json_find_member(result, "result");
 
       // check for "false"
       if (position->tag == JSON_BOOL && position->bool_ == false) {
@@ -198,7 +198,7 @@ bool SocketBackend::getBeforeAndAfterNames(uint32_t id, const std::string& zonen
       }
       json_delete(query);
       if (result == NULL) return false;
-      position = json_find_member(d_result, "result");
+      position = json_find_member(result, "result");
 
       // check for "false"
       if (position->tag == JSON_BOOL && position->bool_ == false) {
@@ -239,8 +239,15 @@ bool SocketBackend::getDomainMetadata(const std::string& name, const std::string
          L<<Logger::Error<<"Failed to query "<<connector->getConnectorName()<<endl;
       }
       json_delete(query);
+
       if (result == NULL) return false;
-      position = json_find_member(d_result, "result");
+      position = json_find_member(result, "result");
+
+      // wonder if we can't find result?
+      if (position == NULL) {
+         json_delete(result);
+         throw new SBException("Expected result, got something else");
+      }
 
       // check for "false"
       if (position->tag == JSON_BOOL && position->bool_ == false) {
@@ -283,7 +290,7 @@ bool SocketBackend::getDomainKeys(const std::string& name, unsigned int kind, st
       }
       json_delete(query);
       if (result == NULL) return false;
-      position = json_find_member(d_result, "result");
+      position = json_find_member(result, "result");
 
       // check for "false"
       if (position->tag == JSON_BOOL && position->bool_ == false) {
@@ -330,7 +337,7 @@ bool SocketBackend::getTSIGKey(const std::string& name, std::string* algorithm, 
       }
       json_delete(query);
       if (result == NULL) return false;
-      position = json_find_member(d_result, "result");
+      position = json_find_member(result, "result");
 
       // check for "false"
       if (position->tag == JSON_BOOL && position->bool_ == false) {
