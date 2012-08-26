@@ -1,32 +1,101 @@
-A SocketBackend for PowerDNS. Features UNIX Socket, TCP and UDP connectors. Uses JSON for discussions between the other end and itself.
+Remote backend for PowerDNS.
 
-TBD: Query formats
+This backend provides unix socket / pipe / http remoting for powerdns.
 
-Configuration
+NB! THIS BACKEND IS EXPERIMENTAL - DO NOT USE IN PRODUCTION ENVIRONMENT 
 
-The only configuration option available will be
+1. Compiling
 
-socket-connection-string=connstr
+To compile this backend, you need to configure --with-modules="remote pipe". 
 
-connstr := connector:options
-options := option,option,option
-option := key=value
+Also, you need to apply the patch 0001-Added-remotebackend-for-compile.patch
+to enable compiling the backend. Then you need to run ./bootstrap and
+configure.
 
-Common options
+2. Usage
 
-timeout = seconds
+The only configuration option for this backend is remote-connection-string.
 
-Connector 'unix'
+It comprises of two elements: type of backend, and parameters
 
-path = /path/to/socket
+remote-connection-string=<type>:<param>=<value>,<param>=<value>...
 
-Connector 'tcp'
+You can pass as many parameters as you want, for unix and pipe backends, these
+are passed along to the remote end as initialization. See API.
 
-host = hostname or address
-port = port
-reuse = reuse same tcp connection
+2.1. Unix backend
 
-Connector 'udp'
+parameters: path 
 
-host = hostname or address
-port = port
+remote-connection-string=unix:path=/path/to/socket
+
+2.2. Pipe backend
+
+parameters: command
+
+remote-connection-string=unix:command=/path/to/executable
+
+Due to how pipe backend is implemented, keep your responses in one line. 
+
+2.3. HTTP backend
+
+parameters: url
+
+The URL parameters provides a mask which is applied to each method called.
+
+Example: http://localhost/dns/%s.json will turn into 
+
+http://localhost/dns/lookup.json and so on, see API.
+
+3. API
+
+3.1. Queries
+
+Unix and Pipe backend sends JSON formatted string to the remote end. Each 
+JSON query has two sections, 'method' and 'parameters'. 
+
+HTTP backend calls methods based on URL and has parameters in the query string.
+The calls are always GET calls.
+
+3.2. Replies
+
+You *must* always reply with JSON hash with at least one key, 'result'. This 
+must be false if the query failed. Otherwise it must conform to the expected
+result.
+
+You can optionally add 'log' array, each line in this array will be logged in
+PowerDNS.
+
+3.3. Methods
+
+The following methods are used:
+
+Method: lookup
+Parameters: qtype, domain, remote, local, real-remote, zone_id
+Reply: array of <qtype,qname,content,ttl,domaind_id,priority,scopeMask>
+Optional values: domain_id and scopeMask
+
+Method: list
+Parameters: target, domain_id
+Reply: array of <qtype,qname,content,ttl,domaind_id,priority,scopeMask>
+Optional values: domain_id and scopeMask
+
+Method: getBeforeAndAfterNamesAbsolute
+Parameters: id, qname
+Reply: unhashed, before, after
+
+Method: getBeforeAndAfterNames
+Parameters: id, zonename, qname
+Reply: before, after
+
+Method: getDomainMetadata
+Parameters: name, kind
+Reply: array of strings
+
+Method: getDomainKeys
+Parameters: name, kind
+Reply: array of domain keys <id,flags,active,content>
+
+Method: getTSIGKey
+Parameters: name
+Reply: algorithm, content
