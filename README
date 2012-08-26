@@ -6,6 +6,8 @@ NB! THIS BACKEND IS EXPERIMENTAL - DO NOT USE IN PRODUCTION ENVIRONMENT
 
 1. Compiling
 
+Install following libraries for dependencies: libjsoncpp, libcurl 
+
 To compile this backend, you need to configure --with-modules="remote pipe". 
 
 Also, you need to apply the patch 0001-Added-remotebackend-for-compile.patch
