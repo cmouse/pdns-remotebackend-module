@@ -23,7 +23,7 @@ size_t tcpconnector_write_data(void *buffer, size_t size, size_t nmemb, void *us
     TCPConnector *tc = reinterpret_cast<TCPConnector*>(userp);
     std::string tmp(reinterpret_cast<char *>(buffer), size*nmemb);
     tc->d_data += tmp;
-    return size;
+    return nmemb;
 }
 
 void json_as_string(const Json::Value &input, std::string &output) {
