@@ -1,0 +1,40 @@
+From 8aef4034d3e465fe36f2a790c48d10467c53450a Mon Sep 17 00:00:00 2001
+From: Aki Tuomi <cmouse@cmouse.fi>
+Date: Sun, 26 Aug 2012 19:00:11 +0300
+Subject: [PATCH] Added remotebackend for compile
+
+---
+ configure.ac        |    4 +++-
+ modules/Makefile.am |    2 +-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index f94b158..2e48cde 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -9,6 +9,7 @@ AC_PREREQ(2.52)
+ AC_PREFIX_DEFAULT(/usr/local)
+ AC_PROG_CC
+ AC_PROG_CXX
++AM_PROG_CC_C_O
+ AC_PROG_YACC
+ AM_PROG_LEX
+ AC_PROG_INSTALL
+@@ -665,4 +666,5 @@ modules/mongodbbackend/Makefile \
+ modules/gpgsqlbackend/Makefile modules/ldapbackend/Makefile \
+ modules/gsqlitebackend/Makefile modules/gsqlite3backend/Makefile \
+ modules/goraclebackend/Makefile modules/mydnsbackend/Makefile \
+-modules/luabackend/Makefile modules/tinydnsbackend/Makefile)
++modules/luabackend/Makefile modules/tinydnsbackend/Makefile \
++modules/remotebackend/Makefile)
+diff --git a/modules/Makefile.am b/modules/Makefile.am
+index af5bccb..5aebbe1 100644
+--- a/modules/Makefile.am
++++ b/modules/Makefile.am
+@@ -1,2 +1,2 @@
+ SUBDIRS=@moduledirs@
+-DIST_SUBDIRS=db2backend geobackend gmysqlbackend godbcbackend goraclebackend gpgsqlbackend gsqlite3backend gsqlitebackend ldapbackend luabackend mongodbbackend mydnsbackend opendbxbackend oraclebackend pipebackend xdbbackend tinydnsbackend
++DIST_SUBDIRS=db2backend geobackend gmysqlbackend godbcbackend goraclebackend gpgsqlbackend gsqlite3backend gsqlitebackend ldapbackend luabackend mongodbbackend mydnsbackend opendbxbackend oraclebackend pipebackend xdbbackend tinydnsbackend remotebackend
+-- 
+1.7.9.5
+
