@@ -101,3 +101,64 @@ Reply: array of domain keys <id,flags,active,content>
 Method: getTSIGKey
 Parameters: name
 Reply: algorithm, content
+
+4. EXAMPLES
+
+Scenario: SOA lookup via pipe or unix
+
+Query: 
+
+{ 
+  "method": "lookup",
+  "parameters": {
+     "qname": "example.com", 
+     "qtype": "SOA",
+     "zone_id": "-1"
+  }
+}
+
+Reply:
+
+{
+  "result": 
+   [ 
+     { "qtype": "SOA",
+       "qname": "example.com", 
+       "content": "dns1.icann.org. hostmaster.icann.org. 2012080849 7200 3600 1209600 3600",
+       "ttl": 3600,
+       "priority": 0,
+       "domain_id": -1
+     }
+   ]
+}
+
+
+Scenario: SOA lookup via hTTP backend
+
+Query:
+
+/dns/lookup.json?qname=example.com&qtype=SOA&zone_id=-1&
+
+Reply:
+
+{
+  "result":
+   [
+     { "qtype": "SOA",
+       "qname": "example.com",
+       "content": "dns1.icann.org. hostmaster.icann.org. 2012080849 7200 3600 1209600 3600",
+       "ttl": 3600,
+       "priority": 0,
+       "domain_id": -1
+     }
+   ]
+}
+
+5. TODO
+
+ - Improve error handling and reply validation
+ - Check for leaks
+ - Code coverage
+ - Better handling for unix/pipe request failure 
+   now causes NXDOMAIN, should cause SERVFAIL
+
