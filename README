@@ -133,7 +133,7 @@ Reply:
 }
 
 
-Scenario: SOA lookup via hTTP backend
+Scenario: SOA lookup via HTTP backend
 
 Query:
 
