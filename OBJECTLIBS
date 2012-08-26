@@ -1,1 +1,1 @@
--lboost_system
+-lboost_system -ljsoncpp -lcurl

@@ -1,1 +1,1 @@
-connector.o socketbackend.o json.o tcp_connector.o unix_connector.o 
+remotebackend.o unixconnector.o tcpconnector.o pipeconnector.o

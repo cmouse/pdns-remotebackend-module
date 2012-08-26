@@ -1,13 +1,13 @@
 AM_CPPFLAGS=@THREADFLAGS@ $(BOOST_CPPFLAGS)
 #if !ALLSTATIC
 #install-exec-local:
-#	install .lib/libsocketbackend.so.0.0.0 @libdir@
+#       install .lib/libremotebackend.so.0.0.0 @libdir@
 #endif
 
 EXTRA_DIST=OBJECTFILES OBJECTLIBS
-lib_LTLIBRARIES = libsocketbackend.la
+lib_LTLIBRARIES = libremotebackend.la
 
-libsocketbackend_la_SOURCES=connector.hh connector.cc socketbackend.cc socketbackend.hh json.c json.h unix_connector.cc tcp_connector.cc 
+libremotebackend_la_SOURCES=remotebackend.hh remotebackend.cc unixconnector.cc tcpconnector.cc pipeconnector.cc
 
-libsocketbackend_la_LDFLAGS=-module -avoid-version
-libsocketbackend_la_LIBS=-lboost_system
+libremotebackend_la_LDFLAGS=-module -avoid-version
+libremotebackend_la_LIBS=-lboost_system -ljsoncpp -lcurl
