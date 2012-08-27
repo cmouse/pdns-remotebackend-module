@@ -50,13 +50,17 @@ int PipeConnector::send_message(const Json::Value &input)
 int PipeConnector::recv_message(Json::Value &output) 
 {
    Json::Reader r;
+   std::string tmp;
+   std::string data;
    launch();
    try {
       std::string line;
-      coproc->receive(line); // hope it is in one line...
-      if (r.parse(line,output) == true) 
-        return 1;
-      return -1; // wasn't json
+      while(1) {
+        coproc->receive(tmp);
+        data.append(tmp);
+        if (r.parse(data,output) == true) 
+          return data.size();
+      }
    }
    catch(AhuException &ae) {
       L<<Logger::Warning<<"[pipeconnector] "<<" unable to receive data from coprocess. "<<ae.reason<<endl;
