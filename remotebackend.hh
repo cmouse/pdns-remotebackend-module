@@ -32,22 +32,23 @@ class UnixsocketConnector: public Connector {
     virtual int recv_message(Json::Value &output);
 };
 
-class TCPConnector: public Connector {
+class HTTPConnector: public Connector {
   public:
 
-  TCPConnector(std::map<std::string,std::string> options);
-  ~TCPConnector();
+  HTTPConnector(std::map<std::string,std::string> options);
+  ~HTTPConnector();
 
   virtual int send_message(const Json::Value &input);
   virtual int recv_message(Json::Value &output);
-  friend size_t ::tcpconnector_write_data(void*, size_t, size_t, void*);
+  friend size_t ::httpconnector_write_data(void*, size_t, size_t, void*);
 
   private:
-    std::string d_host;
-    std::string d_port;
     std::string d_url;
+    std::string d_url_suffix;
     CURL *d_c;
     std::string d_data;
+    void json2string(const Json::Value &input, std::string &output);
+    void requestbuilder(const std::string &method, const Json::Value &parameters, struct curl_slist **slist);
 };
 
 class PipeConnector: public Connector {

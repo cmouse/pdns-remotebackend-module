@@ -41,13 +41,13 @@ Due to how pipe backend is implemented, keep your responses in one line.
 
 2.3. HTTP backend
 
-parameters: url
+parameters: url, url-suffix
 
-The URL parameters provides a mask which is applied to each method called.
+HTTP backend tries to do RESTful requests to your server. See examples.
 
-Example: http://localhost/dns/%s.json will turn into 
-
-http://localhost/dns/lookup.json and so on, see API.
+URL must end with /, and url-suffix is optional, but if you define it, it's
+up to you to write the ".php" or ".json". Lack of dot causes lack of dot in
+URL. 
 
 3. API
 
@@ -78,7 +78,7 @@ Reply: array of <qtype,qname,content,ttl,domaind_id,priority,scopeMask>
 Optional values: domain_id and scopeMask
 
 Method: list
-Parameters: target, domain_id
+Parameters: zonename, domain_id
 Reply: array of <qtype,qname,content,ttl,domaind_id,priority,scopeMask>
 Optional values: domain_id and scopeMask
 
@@ -137,7 +137,7 @@ Scenario: SOA lookup via hTTP backend
 
 Query:
 
-/dns/lookup.json?qname=example.com&qtype=SOA&zone_id=-1&
+/dns/lookup/example.com/SOA
 
 Reply:
 

@@ -74,7 +74,7 @@ int RemoteBackend::build(const std::string &connstr) {
       }
 
       if (type == "http") {
-        this->connector = new TCPConnector(options);
+        this->connector = new HTTPConnector(options);
       } else if (type == "unix") {
         this->connector = new UnixsocketConnector(options);
       } else if (type == "pipe") {
@@ -126,7 +126,7 @@ bool RemoteBackend::get(DNSResourceRecord &rr) {
    rr.scopeMask = d_result[d_index].get("scopeMask",Json::Value(0)).asInt();
 
    d_index++;
-   if (d_index == d_result.size()) {
+   if (d_index == static_cast<int>(d_result.size())) {
      d_result = Json::Value();
      d_index = -1;
    }
@@ -141,7 +141,7 @@ bool RemoteBackend::list(const std::string &target, int domain_id) {
 
    query["method"] = "list";
    query["parameters"] = Json::Value();
-   query["parameters"]["target"] = target;
+   query["parameters"]["zonename"] = target;
    query["parameters"]["domain_id"] = domain_id;
 
    if (connector->send(query) == false || connector->recv(d_result) == false) 
