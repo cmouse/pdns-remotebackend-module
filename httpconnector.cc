@@ -52,32 +52,34 @@ void HTTPConnector::requestbuilder(const std::string &method, const Json::Value 
 
     ss << d_url;
 
+    ss << "/" << method;
+
     // zonename goes first
     if ((param = parameters.get("zonename", Json::Value())).isNull() == false) {
        json2string(param, sparam);
-       ss << sparam << "/";
+       ss << "/" << sparam;
     }
 
     // then try qname
     if ((param = parameters.get("qname", Json::Value())).isNull() == false) {
        json2string(param, sparam);
-       ss << sparam << "/";
+       ss << "/" << sparam;
     }
 
     // and finally name
     if ((param = parameters.get("name", Json::Value())).isNull() == false) {
        json2string(param, sparam);
-       ss << sparam << "/";
+       ss << "/" << sparam;
     }
 
     // next level can be kind or qtype
     if ((param = parameters.get("kind", Json::Value())).isNull() == false) {
        json2string(param, sparam);
-       ss << sparam << "/";
+       ss << "/" << sparam;
     }
     if ((param = parameters.get("qtype", Json::Value())).isNull() == false) {
        json2string(param, sparam);
-       ss << sparam << "/";
+       ss << "/" << sparam;
     }
 
     // finally add suffix
