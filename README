@@ -43,7 +43,7 @@ parameters: url, url-suffix
 
 HTTP backend tries to do RESTful requests to your server. See examples.
 
-URL must end with /, and url-suffix is optional, but if you define it, it's
+URL should not end with /, and url-suffix is optional, but if you define it, it's
 up to you to write the ".php" or ".json". Lack of dot causes lack of dot in
 URL. 
 
