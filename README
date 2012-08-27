@@ -37,8 +37,6 @@ parameters: command
 
 remote-connection-string=unix:command=/path/to/executable
 
-Due to how pipe backend is implemented, keep your responses in one line. 
-
 2.3. HTTP backend
 
 parameters: url, url-suffix
