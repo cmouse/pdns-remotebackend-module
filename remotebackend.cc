@@ -168,9 +168,9 @@ bool RemoteBackend::getBeforeAndAfterNamesAbsolute(uint32_t id, const std::strin
    if (connector->send(query) == false || connector->recv(answer) == false)
      return false;
    
-   unhashed = answer["result"]["unhashed"].asString();
-   before = answer["result"]["before"].asString();
-   after = answer["result"]["after"].asString();
+   unhashed = answer["unhashed"].asString();
+   before = answer["before"].asString();
+   after = answer["after"].asString();
   
    return true;
 }
@@ -190,8 +190,8 @@ bool RemoteBackend::getBeforeAndAfterNames(uint32_t id, const std::string& zonen
    if (connector->send(query) == false || connector->recv(answer) == false)
      return false;
 
-   before = answer["result"]["before"].asString();
-   after = answer["result"]["after"].asString();
+   before = answer["before"].asString();
+   after = answer["after"].asString();
 
    return true;
 }
@@ -208,7 +208,7 @@ bool RemoteBackend::getDomainMetadata(const std::string& name, const std::string
 
    meta.clear();
 
-   for(Json::ValueIterator iter = answer["result"].begin(); iter != answer["result"].end(); iter++) {
+   for(Json::ValueIterator iter = answer.begin(); iter != answer.end(); iter++) {
           meta.push_back((*iter).asString());
    }
 
@@ -231,12 +231,13 @@ bool RemoteBackend::getDomainKeys(const std::string& name, unsigned int kind, st
 
    keys.clear();
 
-   for(Json::ValueIterator iter = answer["result"].begin(); iter != answer["result"].end(); iter++) {
+   for(Json::ValueIterator iter = answer.begin(); iter != answer.end(); iter++) {
       DNSBackend::KeyData key;
       key.id = (*iter)["id"].asUInt();
       key.flags = (*iter)["flags"].asUInt();
       key.active = (*iter)["active"].asBool();
       key.content = (*iter)["content"].asString();
+      keys.push_back(key);
    }
 
    return true;
@@ -252,9 +253,9 @@ bool RemoteBackend::getTSIGKey(const std::string& name, std::string* algorithm, 
      return false;
 
    if (algorithm != NULL)
-     algorithm->assign(answer["result"]["algorithm"].asString());
+     algorithm->assign(answer["algorithm"].asString());
    if (content != NULL)
-     content->assign(answer["result"]["content"].asString());
+     content->assign(answer["content"].asString());
    
    return true;
 }
