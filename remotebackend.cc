@@ -142,7 +142,7 @@ bool RemoteBackend::list(const std::string &target, int domain_id) {
    query["method"] = "list";
    query["parameters"] = Json::Value();
    query["parameters"]["zonename"] = target;
-   query["parameters"]["domain_id"] = domain_id;
+   query["parameters"]["domain-id"] = domain_id;
 
    if (connector->send(query) == false || connector->recv(d_result) == false) 
      return false;
