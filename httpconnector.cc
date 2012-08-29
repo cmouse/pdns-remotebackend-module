@@ -44,6 +44,7 @@ void HTTPConnector::requestbuilder(const std::string &method, const Json::Value 
     std::stringstream ss;
     Json::Value param;
     std::string sparam;
+    char *tmpstr;
 
     // check for certain elements
     std::vector<std::string> members = parameters.getMemberNames();
@@ -82,18 +83,58 @@ void HTTPConnector::requestbuilder(const std::string &method, const Json::Value 
        ss << "/" << sparam;
     }
 
+    if ((param = parameters.get("id", Json::Value())).isNull() == false) {
+       json2string(param, sparam);
+       ss << "/" << sparam;
+    }
+
     // finally add suffix
     ss << d_url_suffix;
     curl_easy_setopt(d_c, CURLOPT_URL, ss.str().c_str());
 
     (*slist) = NULL;
+    // set the correct type of request based on method
+    if (method == "activateDomainKey" || method == "deactivateDomainKey") { 
+        // create an empty post
+        curl_easy_setopt(d_c, CURLOPT_POST, 1);
+        curl_easy_setopt(d_c, CURLOPT_POSTFIELDSIZE, 0);
+    } else if (method == "addDomainKey") {
+        std::stringstream ss2;
+        param = parameters["key"]; 
+        ss2 << "flags" << param["flags"].asUInt() << "&active" << (param["active"].asBool() ? 1 : 0) << "&content=";
+        tmpstr = curl_easy_escape(d_c, param["content"].asCString(), 0);
+        ss2 << tmpstr;
+        sparam = ss2.str();
+        curl_easy_setopt(d_c, CURLOPT_POSTFIELDSIZE, sparam.size());
+        curl_easy_setopt(d_c, CURLOPT_COPYPOSTFIELDS, sparam.c_str());
+        curl_free(tmpstr);
+    } else if (method == "setDomainMetadata") {
+        std::stringstream ss2;
+        param = parameters["value"];
+        curl_easy_setopt(d_c, CURLOPT_POST, 1);
+        // this one has values too
+        if (param.isArray()) {
+           for(Json::ValueIterator i = param.begin(); i != param.end(); i++) {
+              ss2 << "value[]=" << (*i).asString() << "&";
+           }
+        }
+        sparam = ss2.str();
+        curl_easy_setopt(d_c, CURLOPT_POSTFIELDSIZE, sparam.size());
+        curl_easy_setopt(d_c, CURLOPT_COPYPOSTFIELDS, sparam.c_str());
+    } else if (method == "removeDomainKey") {
+        // this one is DELETE
+        curl_easy_setopt(d_c, CURLOPT_CUSTOMREQUEST, "DELETE");
+    } else {
+        curl_easy_setopt(d_c, CURLOPT_HTTPGET, 1);
+    }
 
     // put everything else into headers
     BOOST_FOREACH(std::string member, members) {
       char header[1024];
       if (member == "zonename" || member == "qname" ||
           member == "name" || member == "kind" ||
-          member == "qtype") continue;
+          member == "qtype" || member == "id" ||
+          member == "key" ) continue;
       json2string(parameters[member], sparam);
       snprintf(header, sizeof header, "X-RemoteBackend-%s: %s", member.c_str(), sparam.c_str());
       (*slist) = curl_slist_append((*slist), header);
@@ -118,7 +159,6 @@ int HTTPConnector::send_message(const Json::Value &input) {
     slist = NULL;
     requestbuilder(input["method"].asString(), input["parameters"], &slist);
 
-    curl_easy_setopt(d_c, CURLOPT_HTTPGET, 1);
     curl_easy_setopt(d_c, CURLOPT_WRITEFUNCTION, &(httpconnector_write_data));
     curl_easy_setopt(d_c, CURLOPT_WRITEDATA, this);
 
@@ -129,9 +169,12 @@ int HTTPConnector::send_message(const Json::Value &input) {
     } else {
       rv = 1;
       // ensure the result was OK
-      if (curl_easy_getinfo(d_c, CURLINFO_RESPONSE_CODE, &rcode) != CURLE_OK || rcode != 200) {
+      if (curl_easy_getinfo(d_c, CURLINFO_RESPONSE_CODE, &rcode) != CURLE_OK || rcode < 200 || rcode > 299) {
          rv = -1;
       } else {
+         // ok. if d_data == 0 but rcode is 2xx then result:true
+         if (this->d_data.size() == 0) 
+            this->d_data = "{\"result\": true}";
          rv = this->d_data.size();
       }
     }

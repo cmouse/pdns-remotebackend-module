@@ -3,10 +3,21 @@
 
 static const char *kBackendId = "[RemoteBackend]";
 
+/**
+ * Forwarder for value. This is just in case
+ * we need to do some treatment to the value before
+ * sending it downwards.
+ */
 bool Connector::send(Json::Value &value) {
     return send_message(value);
 }
 
+/** 
+ * Helper for handling receiving of data.
+ * Basically what happens here is that we check 
+ * that the receiving happened ok, and extract
+ * result. Logging is performed here, too. 
+ */
 bool Connector::recv(Json::Value &value) {
     Json::Value input;
     if (recv_message(input)>0) {
@@ -42,6 +53,10 @@ RemoteBackend::~RemoteBackend() {
      }
 }
 
+/** 
+ * Builds connector based on options
+ * Currently supports unix,pipe and http
+ */
 int RemoteBackend::build(const std::string &connstr) {
       std::vector<std::string> parts;
       std::string type;
@@ -57,22 +72,29 @@ int RemoteBackend::build(const std::string &connstr) {
       type = connstr.substr(0, pos);
       opts = connstr.substr(pos+1);
 
+      // tokenize the string on comma
       stringtok(parts, opts, ",");
 
       // find out some options and parse them while we're at it
       BOOST_FOREACH(std::string opt, parts) {
           std::string key,val;
+          // make sure there is something else than air in the option...
           if (opt.find_first_not_of(" ") == std::string::npos) continue;
 
+          // split it on '='. if not found, we treat it as "yes"
           pos = opt.find_first_of("=");
+
           if (pos == std::string::npos) {
-             throw new AhuException("Invalid connection string: option format is key=value");
+             key = opt;
+             val = "yes";
+          } else {
+             key = opt.substr(0,pos);
+             val = opt.substr(pos+1);
           }
-          key = opt.substr(0,pos);
-          val = opt.substr(pos+1);
           options[key] = val;
       }
 
+      // connectors know what they are doing
       if (type == "http") {
         this->connector = new HTTPConnector(options);
       } else if (type == "unix") {
@@ -86,6 +108,10 @@ int RemoteBackend::build(const std::string &connstr) {
       return -1;
 }
 
+/** 
+ * The functions here are just remote json stubs that send and receive the method call
+ * data is mainly left alone, some defaults are assumed. 
+ */
 void RemoteBackend::lookup(const QType &qtype, const std::string &qdomain, DNSPacket *pkt_p, int zoneId) {
    Json::Value query,args;
 
@@ -130,6 +156,8 @@ bool RemoteBackend::get(DNSResourceRecord &rr) {
    rr.scopeMask = d_result[d_index].get("scopeMask",Json::Value(0)).asInt();
 
    d_index++;
+   
+   // id index is out of bounds, we know the results end here. 
    if (d_index == static_cast<int>(d_result.size())) {
      d_result = Json::Value();
      d_index = -1;
@@ -215,6 +243,23 @@ bool RemoteBackend::getDomainMetadata(const std::string& name, const std::string
    return true;
 }
 
+bool RemoteBackend::setDomainMetadata(const string& name, const std::string& kind, const std::vector<std::string>& meta) {
+   Json::Value query,answer;
+   query["method"] = "setDomainMetadata";
+   query["parameters"] = Json::Value();
+   query["parameters"]["name"] = name;
+   query["parameters"]["kind"] = kind;
+   query["parameters"]["value"] = Json::Value();
+   BOOST_FOREACH(std::string value, meta) {
+     query["parameters"]["value"].append(value);
+   }
+
+   if (connector->send(query) == false || connector->recv(answer) == false)
+     return false;
+
+   return answer.asBool();
+}
+
 
 bool RemoteBackend::getDomainKeys(const std::string& name, unsigned int kind, std::vector<DNSBackend::KeyData>& keys) {
    Json::Value query,answer;
@@ -241,6 +286,69 @@ bool RemoteBackend::getDomainKeys(const std::string& name, unsigned int kind, st
    }
 
    return true;
+}
+
+bool RemoteBackend::removeDomainKey(const string& name, unsigned int id) { 
+   Json::Value query,answer;
+   // no point doing dnssec if it's not supported
+   if (d_dnssec == false) return false;
+   query["method"] = "remoteDomainKey";
+   query["parameters"] = Json::Value();
+   query["parameters"]["name"] = name;
+   query["parameters"]["id"] = id;
+
+   if (connector->send(query) == false || connector->recv(answer) == false)
+     return false;
+
+   return answer.asBool();
+}
+
+int RemoteBackend::addDomainKey(const string& name, const KeyData& key) {
+   Json::Value query,answer;
+
+   // no point doing dnssec if it's not supported
+   if (d_dnssec == false) return false;
+   query["method"] = "addDomainKey";
+   query["parameters"] = Json::Value();
+   query["parameters"]["name"] = name;
+   query["parameters"]["key"] = Json::Value();
+   query["parameters"]["key"]["flags"] = key.flags;
+   query["parameters"]["key"]["active"] = key.active;
+   query["parameters"]["key"]["content"] = key.content;
+
+   if (connector->send(query) == false || connector->recv(answer) == false)
+     return false;
+
+   return answer.asInt();
+}
+
+bool RemoteBackend::activateDomainKey(const string& name, unsigned int id) {
+   Json::Value query,answer;
+   // no point doing dnssec if it's not supported
+   if (d_dnssec == false) return false;
+   query["method"] = "activateDomainKey";
+   query["parameters"] = Json::Value();
+   query["parameters"]["name"] = name;
+   query["parameters"]["id"] = id;
+
+   if (connector->send(query) == false || connector->recv(answer) == false)
+     return false;
+
+   return answer.asBool();
+}
+
+bool RemoteBackend::deactivateDomainKey(const string& name, unsigned int id) {
+   Json::Value query,answer;
+   // no point doing dnssec if it's not supported
+   if (d_dnssec == false) return false;
+   query["method"] = "deactivateDomainKey";
+   query["parameters"] = Json::Value();
+   query["parameters"]["name"] = name;
+   query["parameters"]["id"] = id;
+   if (connector->send(query) == false || connector->recv(answer) == false)
+     return false;
+
+   return answer.asBool();
 }
 
 bool RemoteBackend::getTSIGKey(const std::string& name, std::string* algorithm, std::string* content) {

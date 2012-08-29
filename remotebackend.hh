@@ -78,12 +78,16 @@ class RemoteBackend : public DNSBackend
   bool get(DNSResourceRecord &rr);
   bool list(const std::string &target, int domain_id);
 
-  // unimplemented
   virtual bool getDomainMetadata(const std::string& name, const std::string& kind, std::vector<std::string>& meta);
   virtual bool getDomainKeys(const std::string& name, unsigned int kind, std::vector<DNSBackend::KeyData>& keys);
   virtual bool getTSIGKey(const std::string& name, std::string* algorithm, std::string* content);
   virtual bool getBeforeAndAfterNamesAbsolute(uint32_t id, const std::string& qname, std::string& unhashed, std::string& before, std::string& after);
   virtual bool getBeforeAndAfterNames(uint32_t id, const std::string& zonename, const std::string& qname, std::string& before, std::string& after);
+  virtual bool setDomainMetadata(const string& name, const string& kind, const std::vector<std::basic_string<char> >& meta);
+  virtual bool removeDomainKey(const string& name, unsigned int id);
+  virtual int addDomainKey(const string& name, const KeyData& key);
+  virtual bool activateDomainKey(const string& name, unsigned int id);
+  virtual bool deactivateDomainKey(const string& name, unsigned int id);
 
   static DNSBackend *maker();
 
