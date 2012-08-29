@@ -85,6 +85,7 @@ class UnixsocketConnection {
           return;
        }
        sock.sun_family = AF_UNIX;
+       memset(sock.sun_path, 0, UNIX_PATH_MAX);
        path.copy(sock.sun_path, UNIX_PATH_MAX, 0);
        fcntl(fd, F_SETFL, O_NONBLOCK, &fd);
        
@@ -138,11 +139,13 @@ UnixsocketConnector::~UnixsocketConnector() {
 int UnixsocketConnector::send_message(const Json::Value &input) {
         std::string data;
         Json::FastWriter writer;
+        int rv;
         data = writer.write(input);
         //i make sure we got nothing waiting there.
         std::string temp;
         while(unix_socket_connection->read(temp)>0) { temp = ""; }
-        return unix_socket_connection->write(data);
+        rv = unix_socket_connection->write(data);
+        return rv;
 }
 
 int UnixsocketConnector::recv_message(Json::Value &output) {
