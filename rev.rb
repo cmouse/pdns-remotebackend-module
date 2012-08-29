@@ -76,14 +76,7 @@ def send_failure(msg)
 end
 
 class Handler
-   attr :prefix, :plen, :suffix
- 
    def do_initialize(*args)
-     @prefix = "2001:06e8:0500:0000"
-     # precalculate some things
-     tmp = self.prefix.gsub(/[^0-9a-f]/,'')
-     @plen = tmp.size
-     @suffix = tmp.split(//).reverse.join('.')+".ip6.arpa";
      return true
    end
 
@@ -91,26 +84,22 @@ class Handler
      qname = args["qname"]
      # assume prefix
      name = qname.gsub(/ /,'');
-     nlen = 32-self.plen
-
-     name_a = nil
-     name_b = nil
-     unhashed = nil
-
-     if name == ''
-         name_a = sprintf("%0#{nlen}x",0).split(//).join(' ')
-     elsif name.size < nlen
-         name_a = sprintf("%0#{nlen}x",0).split(//).join(' ')
-     else 
-        unhashed = sprintf("%0#{nlen}x",name.to_i(16)).split(//).join(' ')
-        if (name.to_i(16) > 0)
-           name_b = sprintf("%0#{nlen}x",(name.to_i(16)-1)).split(//).join ' '
-        end
-        unless (name[/[^f]/].nil?)
-           name_a = sprintf("%0#{nlen}x",(name.to_i(16)+1)).split(//).join ' '
-        end
+     open("/home/cmouse/pdns/rev.log", "a") do |f|
+     f.puts name
      end
-     return {:before => name_b, :after => name_a, :unhashed => unhashed}
+     unhashed = (name.to_i(16)+1).to_s(16).split(//).join ' ';
+     if (name.to_i(16) > 0)
+        name_b = (name.to_i(16)-1).to_s(16).split(//).join ' ';
+     else
+        name_b = nil
+     end
+
+     if (name == "ffffffffffffffff")
+        name_a = nil
+     else
+        name_a = (name.to_i(16)+1).to_s(16).split(//).join ' ';
+     end
+     return {:before => name_b, :after => name_a, :unhashed => name}
    end
 
    def do_getbeforeandafternames(args)
@@ -136,11 +125,11 @@ class Handler
         end
         ret << rr(qname,"SOA","ns1.songnet.fi. hostmaster.tdc.fi. 1 28800 7200 1209600 300",300)
         return ret
-      elsif qtype == "ANY" or qtype == "PTR" 
+      elsif qtype == "ANY" or qtype == "PTR"
         # assume prefix
         prefix = "0.0.0.0.0.0.5.0.8.e.6.0.1.0.0.2.ip6.arpa"
         name = qname.gsub(prefix,"").split(".").reverse.join("")
-        return false if name.empty? or name.size != 32-plen
+        return false if name.empty?
 	name = to32(name.to_i(16))
         return [rr(qname, "PTR", "node-#{name}.dyn.cmouse.fi", 300)]
       end
@@ -152,6 +141,9 @@ class Handler
    def do_getdomainmetadata(args) 
       name = args["name"]
       kind = args["kind"]
+#      if name == "0.0.0.0.0.0.5.0.8.e.6.0.1.0.0.2.ip6.arpa" and kind == "NSEC3PARAM"
+#         return ["1 1 1 ab"]
+#      end
       false
    end
 
@@ -174,6 +166,9 @@ begin
       method = "do_#{input["method"].downcase}"
       args = input["parameters"]
       log = nil
+      open("/home/cmouse/pdns/rev.log", "a") do |f|
+         f.puts method, args
+      end
       if h.respond_to?(method.to_sym) == false
          res = false
          log = ["No such method"]

@@ -99,7 +99,7 @@ void RemoteBackend::lookup(const QType &qtype, const std::string &qdomain, DNSPa
      args["local"] = pkt_p->getLocal();
      args["real-remote"] = pkt_p->getRealRemote().toString();
    }
-
+   args["zone-id"] = zoneId;
    query["method"] = "lookup";
    query["parameters"] = args;
 
@@ -118,11 +118,15 @@ bool RemoteBackend::get(DNSResourceRecord &rr) {
 
    rr.qtype = d_result[d_index].get("qtype",empty).asString();
    rr.qname = d_result[d_index].get("qname",empty).asString();
+   rr.qclass = QClass::IN;
    rr.content = d_result[d_index].get("content",empty).asString();
    rr.ttl = d_result[d_index].get("ttl",emptyint).asInt();
    rr.domain_id = d_result[d_index].get("domain_id",emptyint).asInt();
    rr.priority = d_result[d_index].get("priority",emptyint).asInt();
-
+   if (d_dnssec) 
+     rr.auth = d_result[d_index].get("auth", Json::Value(1)).asInt();
+   else
+     rr.auth = 1;
    rr.scopeMask = d_result[d_index].get("scopeMask",Json::Value(0)).asInt();
 
    d_index++;
@@ -153,6 +157,8 @@ bool RemoteBackend::list(const std::string &target, int domain_id) {
 
 bool RemoteBackend::getBeforeAndAfterNamesAbsolute(uint32_t id, const std::string& qname, std::string& unhashed, std::string& before, std::string& after) {
    Json::Value query,answer;
+   // no point doing dnssec if it's not supported
+   if (d_dnssec == false) return false;
 
    query["method"] = "getBeforeAndAfterNamesAbsolute";
    query["parameters"] = Json::Value();
@@ -162,15 +168,18 @@ bool RemoteBackend::getBeforeAndAfterNamesAbsolute(uint32_t id, const std::strin
    if (connector->send(query) == false || connector->recv(answer) == false)
      return false;
    
-   unhashed = answer["result"]["unhashed"].asString();
-   before = answer["result"]["before"].asString();
-   after = answer["result"]["after"].asString();
+   unhashed = answer["unhashed"].asString();
+   before = answer["before"].asString();
+   after = answer["after"].asString();
   
    return true;
 }
 
 bool RemoteBackend::getBeforeAndAfterNames(uint32_t id, const std::string& zonename, const std::string& qname, std::string& before, std::string& after) {
    Json::Value query,answer;
+
+   // no point doing dnssec if it's not supported
+   if (d_dnssec == false) return false;
 
    query["method"] = "getBeforeAndAfterNames";
    query["parameters"] = Json::Value();
@@ -181,14 +190,15 @@ bool RemoteBackend::getBeforeAndAfterNames(uint32_t id, const std::string& zonen
    if (connector->send(query) == false || connector->recv(answer) == false)
      return false;
 
-   before = answer["result"]["before"].asString();
-   after = answer["result"]["after"].asString();
+   before = answer["before"].asString();
+   after = answer["after"].asString();
 
    return true;
 }
 
 bool RemoteBackend::getDomainMetadata(const std::string& name, const std::string& kind, std::vector<std::string>& meta) {
    Json::Value query,answer;
+
    query["method"] = "getDomainMetadata";
    query["parameters"] = Json::Value();
    query["parameters"]["name"] = name;
@@ -198,7 +208,7 @@ bool RemoteBackend::getDomainMetadata(const std::string& name, const std::string
 
    meta.clear();
 
-   for(Json::ValueIterator iter = answer["result"].begin(); iter != answer["result"].end(); iter++) {
+   for(Json::ValueIterator iter = answer.begin(); iter != answer.end(); iter++) {
           meta.push_back((*iter).asString());
    }
 
@@ -208,6 +218,9 @@ bool RemoteBackend::getDomainMetadata(const std::string& name, const std::string
 
 bool RemoteBackend::getDomainKeys(const std::string& name, unsigned int kind, std::vector<DNSBackend::KeyData>& keys) {
    Json::Value query,answer;
+   // no point doing dnssec if it's not supported
+   if (d_dnssec == false) return false;
+
    query["method"] = "getDomainKeys";
    query["parameters"] = Json::Value();
    query["parameters"]["name"] = name;
@@ -218,12 +231,13 @@ bool RemoteBackend::getDomainKeys(const std::string& name, unsigned int kind, st
 
    keys.clear();
 
-   for(Json::ValueIterator iter = answer["result"].begin(); iter != answer["result"].end(); iter++) {
+   for(Json::ValueIterator iter = answer.begin(); iter != answer.end(); iter++) {
       DNSBackend::KeyData key;
       key.id = (*iter)["id"].asUInt();
       key.flags = (*iter)["flags"].asUInt();
       key.active = (*iter)["active"].asBool();
       key.content = (*iter)["content"].asString();
+      keys.push_back(key);
    }
 
    return true;
@@ -239,9 +253,9 @@ bool RemoteBackend::getTSIGKey(const std::string& name, std::string* algorithm, 
      return false;
 
    if (algorithm != NULL)
-     algorithm->assign(answer["result"]["algorithm"].asString());
+     algorithm->assign(answer["algorithm"].asString());
    if (content != NULL)
-     content->assign(answer["result"]["content"].asString());
+     content->assign(answer["content"].asString());
    
    return true;
 }
