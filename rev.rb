@@ -137,17 +137,6 @@ class Handler
      false
    end
 
-   def do_list(args)
-      if args["zonename"] == "0.0.0.0.0.0.5.0.8.e.6.0.1.0.0.2.ip6.arpa"
-         return [
-             rr("0.0.0.0.0.0.5.0.8.e.6.0.1.0.0.2.ip6.arpa","SOA","ns1.songnet.fi. hostmaster.tdc.fi. 1 28800 7200 1209600 300",300),
-             rr("0.0.0.0.0.0.5.0.8.e.6.0.1.0.0.2.ip6.arpa", "NS", "ns1.songnet.fi",300),
-             rr("0.0.0.0.0.0.5.0.8.e.6.0.1.0.0.2.ip6.arpa", "NS", "ns2.songnet.fi",300),
-             rr("0.0.0.0.0.0.5.0.8.e.6.0.1.0.0.2.ip6.arpa", "NS", "ns3.songnet.fi",300),
-         ]
-      end
-      false
-   end
  
    def do_getdomainmetadata(args) 
       name = args["name"]
