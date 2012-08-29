@@ -151,8 +151,8 @@ int HTTPConnector::send_message(const Json::Value &input) {
     std::vector<std::string> members;
     std::string method;
 
-    this->d_c = curl_easy_init();
-    this->d_data = "";
+    d_c = curl_easy_init();
+    d_data = "";
     curl_easy_setopt(d_c, CURLOPT_NOSIGNAL, 1);
     curl_easy_setopt(d_c, CURLOPT_TIMEOUT, 2);
 
@@ -163,9 +163,8 @@ int HTTPConnector::send_message(const Json::Value &input) {
     curl_easy_setopt(d_c, CURLOPT_WRITEDATA, this);
 
     // then we actually do it
-    if (curl_easy_perform(d_c) == 0) {
+    if (curl_easy_perform(d_c) != CURLE_OK) {
       rv = -1;
-      d_c = NULL;
     } else {
       rv = 1;
       // ensure the result was OK
@@ -181,6 +180,7 @@ int HTTPConnector::send_message(const Json::Value &input) {
 
     curl_slist_free_all(slist);
     curl_easy_cleanup(d_c);
+
     return rv;
 }
 
