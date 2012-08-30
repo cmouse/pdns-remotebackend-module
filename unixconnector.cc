@@ -9,10 +9,12 @@
 #define UNIX_PATH_MAX 108
 #endif
 
+
+// Singleton class to maintain client connection
+// via single unix socket connection
 static int n_unix_socket_connection;
 static boost::mutex unix_build_mutex;
 static boost::mutex unix_mutex;
-
 class UnixsocketConnection {
   public:
     UnixsocketConnection(const std::string &path)
@@ -145,6 +147,8 @@ int UnixsocketConnector::send_message(const Json::Value &input) {
         std::string temp;
         while(unix_socket_connection->read(temp)>0) { temp = ""; }
         rv = unix_socket_connection->write(data);
+        if (rv == -1)
+            throw AhuException("Failed to write to socket");
         return rv;
 }
 
@@ -161,7 +165,8 @@ int UnixsocketConnector::recv_message(Json::Value &output) {
         while(time(NULL) - t0 < 2) { // 2 second timeout 
           std::string temp;
           rv = unix_socket_connection->read(temp);
-          if (rv == -1) return -1;
+          if (rv == -1) 
+            throw AhuException("Failed to read from socket");
 
           if (rv>0) {
             nread += rv;

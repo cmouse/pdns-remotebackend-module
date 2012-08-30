@@ -24,6 +24,7 @@ HTTPConnector::~HTTPConnector() {
     this->d_c = NULL;
 }
 
+// friend method for writing data into our buffer
 size_t httpconnector_write_data(void *buffer, size_t size, size_t nmemb, void *userp) {
     HTTPConnector *tc = reinterpret_cast<HTTPConnector*>(userp);
     std::string tmp(reinterpret_cast<char *>(buffer), size*nmemb);
@@ -31,6 +32,7 @@ size_t httpconnector_write_data(void *buffer, size_t size, size_t nmemb, void *u
     return nmemb;
 }
 
+// converts json value into string
 void HTTPConnector::json2string(const Json::Value &input, std::string &output) {
    if (input.isString()) output = input.asString();
    else if (input.isNull()) output = "";
@@ -39,6 +41,7 @@ void HTTPConnector::json2string(const Json::Value &input, std::string &output) {
    else output = "inconvertible value";
 }
 
+// builds our request
 void HTTPConnector::requestbuilder(const std::string &method, const Json::Value &parameters, struct curl_slist **slist)
 {
     std::stringstream ss;
@@ -55,25 +58,23 @@ void HTTPConnector::requestbuilder(const std::string &method, const Json::Value 
 
     ss << "/" << method;
 
-    // zonename goes first
+    // add the url components, if found, in following order 
+
     if ((param = parameters.get("zonename", Json::Value())).isNull() == false) {
        json2string(param, sparam);
        ss << "/" << sparam;
     }
 
-    // then try qname
     if ((param = parameters.get("qname", Json::Value())).isNull() == false) {
        json2string(param, sparam);
        ss << "/" << sparam;
     }
-
-    // and finally name
+    
     if ((param = parameters.get("name", Json::Value())).isNull() == false) {
        json2string(param, sparam);
        ss << "/" << sparam;
     }
 
-    // next level can be kind or qtype
     if ((param = parameters.get("kind", Json::Value())).isNull() == false) {
        json2string(param, sparam);
        ss << "/" << sparam;
@@ -99,6 +100,7 @@ void HTTPConnector::requestbuilder(const std::string &method, const Json::Value 
         curl_easy_setopt(d_c, CURLOPT_POST, 1);
         curl_easy_setopt(d_c, CURLOPT_POSTFIELDSIZE, 0);
     } else if (method == "addDomainKey") {
+        // create post with keydata
         std::stringstream ss2;
         param = parameters["key"]; 
         ss2 << "flags" << param["flags"].asUInt() << "&active" << (param["active"].asBool() ? 1 : 0) << "&content=";
@@ -109,6 +111,7 @@ void HTTPConnector::requestbuilder(const std::string &method, const Json::Value 
         curl_easy_setopt(d_c, CURLOPT_COPYPOSTFIELDS, sparam.c_str());
         curl_free(tmpstr);
     } else if (method == "setDomainMetadata") {
+        // copy all metadata values into post
         std::stringstream ss2;
         param = parameters["value"];
         curl_easy_setopt(d_c, CURLOPT_POST, 1);
@@ -122,15 +125,17 @@ void HTTPConnector::requestbuilder(const std::string &method, const Json::Value 
         curl_easy_setopt(d_c, CURLOPT_POSTFIELDSIZE, sparam.size());
         curl_easy_setopt(d_c, CURLOPT_COPYPOSTFIELDS, sparam.c_str());
     } else if (method == "removeDomainKey") {
-        // this one is DELETE
+        // this one is delete
         curl_easy_setopt(d_c, CURLOPT_CUSTOMREQUEST, "DELETE");
     } else {
+        // perform normal get
         curl_easy_setopt(d_c, CURLOPT_HTTPGET, 1);
     }
 
     // put everything else into headers
     BOOST_FOREACH(std::string member, members) {
       char header[1024];
+      // these are not put into headers for obvious reasons
       if (member == "zonename" || member == "qname" ||
           member == "name" || member == "kind" ||
           member == "qtype" || member == "id" ||
@@ -140,6 +145,7 @@ void HTTPConnector::requestbuilder(const std::string &method, const Json::Value 
       (*slist) = curl_slist_append((*slist), header);
     };
 
+    // store headers into request
     curl_easy_setopt(d_c, CURLOPT_HTTPHEADER, *slist); 
 }
 
@@ -151,22 +157,25 @@ int HTTPConnector::send_message(const Json::Value &input) {
     std::vector<std::string> members;
     std::string method;
 
+    // initialize curl
     d_c = curl_easy_init();
     d_data = "";
     curl_easy_setopt(d_c, CURLOPT_NOSIGNAL, 1);
     curl_easy_setopt(d_c, CURLOPT_TIMEOUT, 2);
-
     slist = NULL;
+
+    // build request
     requestbuilder(input["method"].asString(), input["parameters"], &slist);
 
+    // setup write function helper
     curl_easy_setopt(d_c, CURLOPT_WRITEFUNCTION, &(httpconnector_write_data));
     curl_easy_setopt(d_c, CURLOPT_WRITEDATA, this);
 
     // then we actually do it
     if (curl_easy_perform(d_c) != CURLE_OK) {
+      // boo, it failed
       rv = -1;
     } else {
-      rv = 1;
       // ensure the result was OK
       if (curl_easy_getinfo(d_c, CURLINFO_RESPONSE_CODE, &rcode) != CURLE_OK || rcode < 200 || rcode > 299) {
          rv = -1;
@@ -178,6 +187,7 @@ int HTTPConnector::send_message(const Json::Value &input) {
       }
     }
 
+    // clean up resources
     curl_slist_free_all(slist);
     curl_easy_cleanup(d_c);
 
@@ -186,11 +196,12 @@ int HTTPConnector::send_message(const Json::Value &input) {
 
 int HTTPConnector::recv_message(Json::Value &output) {
     Json::Reader r;
+    int rv = -1;
 
-    if (r.parse(d_data, output) == true) {
-       return 1;
-    }
+    // offer whatever we read in send_message
+    if (r.parse(d_data, output) == true)
+       rv = d_data.size();
 
-    d_data = ""; // cleanup
-    return 0;
+    d_data = ""; // cleanup here
+    return rv;
 }
