@@ -2,6 +2,8 @@
 
 require 'json'
 
+prefix = "2001:06e8:0500:0000"
+
 # domain keys
 
 $domain_keys = [
@@ -66,6 +68,9 @@ end
 
 def send_result(result, log = nil)
   out = {:result => result}
+  if log.class != Array
+    log = [log]
+  end
   out[:log] = log unless log.nil?
   print out.to_json
   print "\n"
@@ -76,21 +81,25 @@ def send_failure(msg)
 end
 
 class Handler
-   attr :prefix, :plen, :suffix
- 
+   attr :prefix, :plen, :suffix, :domain
+   
+   def initialize(prefix)
+     @prefix = prefix
+   end
+
    def do_initialize(*args)
-     @prefix = "2001:06e8:0500:0000"
      # precalculate some things
      tmp = self.prefix.gsub(/[^0-9a-f]/,'')
      @plen = tmp.size
-     @suffix = tmp.split(//).reverse.join('.')+".ip6.arpa";
-     return true
+     @suffix = tmp.split(//).reverse.join('.')+".ip6.arpa"
+     @domain = "dyn.example.com"
+     send_result true, "Autorev v6 backend initialized"
    end
 
    def do_getbeforeandafternamesabsolute(args)
      qname = args["qname"]
      # assume prefix
-     name = qname.gsub(/ /,'');
+     name = qname.gsub(/ /,'')
      nlen = 32-self.plen
 
      name_a = nil
@@ -110,7 +119,7 @@ class Handler
            name_a = sprintf("%0#{nlen}x",(name.to_i(16)+1)).split(//).join ' '
         end
      end
-     return {:before => name_b, :after => name_a, :unhashed => unhashed}
+     send_result ({:before => name_b, :after => name_a, :unhashed => unhashed})
    end
 
    def do_getbeforeandafternames(args)
@@ -118,8 +127,11 @@ class Handler
    end
 
    def do_getdomainkeys(args)
-      return $domain_keys if args["name"] == "0.0.0.0.0.0.5.0.8.e.6.0.1.0.0.2.ip6.arpa"
-      false
+      if args["name"] == self.suffix
+         send_result $domain_keys
+      else
+         send_result false
+      end
    end
 
    def do_lookup(args)
@@ -127,40 +139,36 @@ class Handler
      qname = args["qname"]
 
      if qname[/.ip6.arpa$/]
-      if qname == "0.0.0.0.0.0.5.0.8.e.6.0.1.0.0.2.ip6.arpa"
+      if qname == self.suffix
         ret = []
         if (qtype != "SOA")
-           ret << rr(qname, "NS", "ns1.songnet.fi",300)
-           ret << rr(qname, "NS", "ns2.songnet.fi",300)
-           ret << rr(qname, "NS", "ns3.songnet.fi",300)      
+           ret << rr(qname, "NS", "ns1.example.com",300)
+           ret << rr(qname, "NS", "ns2.example.com",300)
+           ret << rr(qname, "NS", "ns3.example.com",300)      
         end
-        ret << rr(qname,"SOA","ns1.songnet.fi. hostmaster.tdc.fi. 1 28800 7200 1209600 300",300)
-        return ret
-      elsif qtype == "ANY" or qtype == "PTR" 
-        # assume prefix
-        prefix = "0.0.0.0.0.0.5.0.8.e.6.0.1.0.0.2.ip6.arpa"
-        name = qname.gsub(prefix,"").split(".").reverse.join("")
-        return false if name.empty? or name.size != 32-plen
+        ret << rr(qname,"SOA","ns1.example.com hostmaster.example.com #{Time.now.strftime("%Y%m%d%H")} 28800 7200 1209600 300",300)
+        return send_result ret
+      elsif qtype == "ANY" or qtype == "PTR"
+        # assume suffix
+        name = qname.gsub(self.suffix,"").split(".").reverse.join("")
+        if name.empty? or name.size != 32-plen
+          return send_result false
+        end
 	name = to32(name.to_i(16))
-        return [rr(qname, "PTR", "node-#{name}.dyn.cmouse.fi", 300)]
+        return send_result [rr(qname, "PTR", "node-#{name}.#{self.domain}", 300)]
       end
      end
-     false
+     send_result false
    end
-
  
    def do_getdomainmetadata(args) 
       name = args["name"]
       kind = args["kind"]
-      false
-   end
-
-   def do_ping
-     return "pong"
+      send_result false
    end
 end
 
-h = Handler.new
+h = Handler.new(prefix)
 
 STDOUT.sync = true
 begin 
@@ -173,16 +181,15 @@ begin
       input = JSON.parse(line)
       method = "do_#{input["method"].downcase}"
       args = input["parameters"]
-      log = nil
+
       if h.respond_to?(method.to_sym) == false
          res = false
-         log = ["No such method"]
+         send_result res, nil
       elsif args.size > 0
-         res = h.send(method,args)
+         h.send(method,args)
       else
-         res = h.send(method)
+         h.send(method)
       end
-      send_result res, log
     rescue JSON::ParserError
       send_failure "Cannot parse input #{line}"
       next
