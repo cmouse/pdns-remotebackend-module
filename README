@@ -2,7 +2,9 @@ Remote backend for PowerDNS.
 
 This backend provides unix socket / pipe / http remoting for powerdns.
 
-NB! THIS BACKEND IS EXPERIMENTAL - DO NOT USE IN PRODUCTION ENVIRONMENT 
+NB! THIS BACKEND IS EXPERIMENTAL - DO NOT USE IN PRODUCTION ENVIRONMENT
+
+This backend is provided under the same licensing terms as PowerDNS itself. 
 
 1. Compiling
 
@@ -100,6 +102,26 @@ Method: getTSIGKey
 Parameters: name
 Reply: algorithm, content
 
+Method: setDomainMetadata
+Parameters: name, kind, value
+Reply: true or false
+
+Method: addDomainKey
+Parameters: flags, active, content
+Reply: id-of-key
+
+Method: remoteDomainKey
+Parameters: name, id
+Reply: true or false
+
+Method: activateDomainKey
+Parameters: name, id
+Reply: true or false
+
+Method: deactivateDomainKey
+Parameters: name, id
+Reply: true or false
+
 4. EXAMPLES
 
 Scenario: SOA lookup via pipe or unix
@@ -155,8 +177,5 @@ Reply:
 5. TODO
 
  - Improve error handling and reply validation
- - Check for leaks
  - Code coverage
- - Better handling for unix/pipe request failure 
-   now causes NXDOMAIN, should cause SERVFAIL
 
