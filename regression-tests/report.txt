@@ -1,0 +1,30 @@
+[2012-09-01 21:21:28] INFO  WEBrick 1.3.1
+[2012-09-01 21:21:28] INFO  ruby 1.9.3 (2011-10-30) [x86_64-linux]
+[2012-09-01 21:21:28] WARN  TCPServer Error: Address already in use - bind(2)
+[2012-09-01 21:21:28] INFO  WEBrick::HTTPServer#start: pid=32201 port=62434
+localhost - - [01/Sep/2012:21:21:30 EEST] "GET /dns/lookup/example.com/SOA HTTP/1.1" 200 174
+- -> /dns/lookup/example.com/SOA
+localhost - - [01/Sep/2012:21:21:30 EEST] "GET /dns/lookup/example.com/ANY HTTP/1.1" 200 849
+- -> /dns/lookup/example.com/ANY
+localhost - - [01/Sep/2012:21:21:30 EEST] "GET /dns/getDomainMetadata/example.com/PRESIGNED HTTP/1.1" 200 27
+- -> /dns/getDomainMetadata/example.com/PRESIGNED
+localhost - - [01/Sep/2012:21:21:30 EEST] "GET /dns/getDomainKeys/example.com/0 HTTP/1.1" 200 1027
+- -> /dns/getDomainKeys/example.com/0
+localhost - - [01/Sep/2012:21:21:30 EEST] "GET /dns/getDomainMetadata/example.com/NSEC3PARAM HTTP/1.1" 200 27
+- -> /dns/getDomainMetadata/example.com/NSEC3PARAM
+localhost - - [01/Sep/2012:21:21:30 EEST] "GET /dns/lookup/smtp-servers.example.com/A HTTP/1.1" 200 338
+- -> /dns/lookup/smtp-servers.example.com/A
+localhost - - [01/Sep/2012:21:21:30 EEST] "GET /dns/lookup/smtp-servers.test.com/A HTTP/1.1" 200 27
+- -> /dns/lookup/smtp-servers.test.com/A
+localhost - - [01/Sep/2012:21:21:30 EEST] "GET /dns/lookup/ns1.example.com/A HTTP/1.1" 200 119
+- -> /dns/lookup/ns1.example.com/A
+localhost - - [01/Sep/2012:21:21:30 EEST] "GET /dns/lookup/ns2.example.com/A HTTP/1.1" 200 119
+- -> /dns/lookup/ns2.example.com/A
+localhost - - [01/Sep/2012:21:21:30 EEST] "GET /dns/getDomainMetadata/example.com/SOA-EDIT HTTP/1.1" 200 27
+- -> /dns/getDomainMetadata/example.com/SOA-EDIT
+localhost - - [01/Sep/2012:21:21:30 EEST] "GET /dns/lookup/example.com/SOA HTTP/1.1" 200 174
+- -> /dns/lookup/example.com/SOA
+localhost - - [01/Sep/2012:21:21:30 EEST] "GET /dns/getBeforeAndAfterNamesAbsolute//4294967295 HTTP/1.1" 200 27
+- -> /dns/getBeforeAndAfterNamesAbsolute//4294967295
+localhost - - [01/Sep/2012:21:21:33 EEST] "GET /dns/getBeforeAndAfterNamesAbsolute//4294967295 HTTP/1.1" 200 27
+- -> /dns/getBeforeAndAfterNamesAbsolute//4294967295
