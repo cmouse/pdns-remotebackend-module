@@ -26,7 +26,8 @@ bool Connector::recv(Json::Value &value) {
        value = input.get("result",Json::Value());
        if (value.isNull() || (value.isBool() && value.asBool() == false)) {
            rv = false;
-        }
+	   value = Json::Value(false);
+        } 
         Json::Value messages = input.get("log", Json::Value());
         if (messages.isArray()) {
            // log em all
