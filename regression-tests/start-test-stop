@@ -326,7 +326,7 @@ __EOF__
                         then
                              extracontexts="dnssec"
                         else
-	                     skipreasons=nodnssec
+	                     skipreasons="nodnssec"
                         fi
 
 			;;
