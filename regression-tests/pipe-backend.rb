@@ -1,9 +1,9 @@
 #!/usr/bin/ruby
 
 require 'json'
-require '/home/cmouse/src/pdns/modules/remotebackend/regression-tests/backend'
+require '../modules/remotebackend/regression-tests/backend'
 
-h = Handler.new("/home/cmouse/src/pdns/modules/remotebackend/regression-tests/remote.sqlite3")
+h = Handler.new("../modules/remotebackend/regression-tests/remote.sqlite3")
 
 STDOUT.sync = true
 begin 
