@@ -1,0 +1,48 @@
+Index: start-test-stop
+===================================================================
+--- start-test-stop	(revision 2750)
++++ start-test-stop	(working copy)
+@@ -339,6 +339,43 @@
+ 				extracontexts="dnssec"
+ 			fi
+ 			;;
++               remotebackend-*)
++                        remotetype=$(echo $context | cut -d- -f 2)
++                        remotesec=$(echo $context | cut -d- -f 3)
++
++                       case $remotetype in
++                       http)
++                               connstr="http:url=http://localhost:62434/dns"
++                               ;;
++                       unix)
++                               connstr="unix:path=/tmp/remote.socket"
++                               ;;
++                       pipe)
++                               connstr="pipe:command=../modules/remotebackend/regression-tests/pipe-backend.rb"
++                               ;;
++                       *)
++                               echo "Invalid usage"
++                               exit 1
++                               ;;
++                       esac
++
++                       if [ "$remotesec" = "dnssec" ]; then
++                               remote_add_param="--remote-dnssec=yes"
++                       fi
++
++                       $RUNWRAPPER ../pdns/pdns_server --daemon=no --local-port=$port --socket-dir=./ \
++                                --no-shuffle --launch=remote \
++                                --query-logging --loglevel=9 --cache-ttl=0 --no-config \
++                                --send-root-referral \
++                                --remote-connection-string="$connstr" $remote_add_param &
++
++                       if [ "$remotesec" = "dnssec" ]
++                        then
++                             extracontexts="dnssec"
++                        else
++                            skipreasons="nodnssec"
++                        fi
++			;;
+ 		tinydns)
+ 			$RUNWRAPPER ../pdns/pdns_server --daemon=no --local-port=$port --socket-dir=./ \
+ 				--no-shuffle --launch=tinydns \
