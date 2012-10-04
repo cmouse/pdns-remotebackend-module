@@ -1,7 +1,6 @@
 #include "remotebackend.hh"
 #include <sys/socket.h>
 #include <unistd.h>
-#include <boost/thread/mutex.hpp>
 #include <sys/select.h>
 #include <fcntl.h>
 #include <curl/curl.h>

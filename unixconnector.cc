@@ -1,7 +1,7 @@
 #include "remotebackend.hh"
 #include <sys/socket.h>
+#include <pdns/lock.hh> 
 #include <unistd.h>
-#include <boost/thread/mutex.hpp>
 #include <sys/select.h>
 #include <fcntl.h>
 
@@ -13,8 +13,8 @@
 // Singleton class to maintain client connection
 // via single unix socket connection
 static int n_unix_socket_connection;
-static boost::mutex unix_build_mutex;
-static boost::mutex unix_mutex;
+static pthread_mutex_t unix_build_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t unix_mutex = PTHREAD_MUTEX_INITIALIZER;
 class UnixsocketConnection {
   public:
     UnixsocketConnection(const std::string &path)
@@ -31,7 +31,7 @@ class UnixsocketConnection {
     ssize_t read(std::string &data) { 
         ssize_t nread;
         char buf[1500] = {0};
-        boost::mutex::scoped_lock scoped_lock(unix_mutex); 
+        Lock scoped_lock(&unix_mutex); 
 
         reconnect();
         if (!connected) return -1;
@@ -52,7 +52,7 @@ class UnixsocketConnection {
     ssize_t write(const std::string &data) { 
         ssize_t nwrite, nbuf;
         char buf[1500];
-        boost::mutex::scoped_lock scoped_lock(unix_mutex); 
+        Lock scoped_lock(&unix_mutex); 
 
         reconnect();
         if (!connected) return -1;
@@ -110,7 +110,7 @@ class UnixsocketConnection {
 static UnixsocketConnection *unix_socket_connection;
 
 UnixsocketConnector::UnixsocketConnector(std::map<std::string,std::string> options) {
-     boost::mutex::scoped_lock scoped_lock(unix_build_mutex);
+     Lock scoped_lock(&unix_build_mutex);
 
      if (unix_socket_connection == NULL) {
        Json::Value init,res;
@@ -129,7 +129,7 @@ UnixsocketConnector::UnixsocketConnector(std::map<std::string,std::string> optio
 }
 
 UnixsocketConnector::~UnixsocketConnector() {
-     boost::mutex::scoped_lock scoped_lock(unix_build_mutex);
+     Lock scoped_lock(&unix_build_mutex);
  
      n_unix_socket_connection--;
      if (n_unix_socket_connection == 0) {
