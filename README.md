@@ -1,3 +1,9 @@
+NB!
+
+THIS BACKEND HAS BEEN MOVED TO POWERDNS AUTH SERVER REPOSITORY - DO NOT USE THIS 
+================================================================================
+
+
 Remote backend for PowerDNS.
 
 This backend provides unix socket / pipe / http remoting for powerdns.
